@@ -66,7 +66,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.debug.coresight.config=stm-events \
     persist.fod.modified.dc_status=false \
     persist.quick.charge.detect=1 \
-    persist.rcs.supported=0 \
     persist.rmnet.data.enable=true \
     persist.sys.force_sw_gles=1 \
     persist.vendor.cp.delta_icl_main_cc_mode_ua=500000 \
