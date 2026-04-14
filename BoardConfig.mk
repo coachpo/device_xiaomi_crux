@@ -1,0 +1,79 @@
+#
+# Copyright (C) 2026 The LineageOS Project
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+DEVICE_PATH := device/xiaomi/crux
+BOARD_VENDOR := xiaomi
+
+BUILD_BROKEN_DUP_RULES := true
+BUILD_BROKEN_USES_NETWORK := true
+BUILD_BROKEN_PREBUILT_ELF_FILES := true
+BUILD_BROKEN_USES_BUILD_COPY_HEADERS := true
+BUILD_BROKEN_VINTF_PRODUCT_COPY_FILES := true
+BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+
+# Inherit from proprietary files
+include vendor/xiaomi/crux/BoardConfigVendor.mk
+
+# Architecture
+TARGET_ARCH := arm64
+TARGET_ARCH_VARIANT := armv8-2a
+TARGET_CPU_ABI := arm64-v8a
+TARGET_CPU_ABI2 :=
+TARGET_CPU_VARIANT := generic
+TARGET_CPU_VARIANT_RUNTIME := cortex-a76
+
+TARGET_2ND_ARCH := arm
+TARGET_2ND_ARCH_VARIANT := armv8-2a
+TARGET_2ND_CPU_ABI := armeabi-v7a
+TARGET_2ND_CPU_ABI2 := armeabi
+TARGET_2ND_CPU_VARIANT := generic
+TARGET_2ND_CPU_VARIANT_RUNTIME := cortex-a76
+
+# Assert
+TARGET_OTA_ASSERT_DEVICE := crux
+
+# Bootloader
+TARGET_BOOTLOADER_BOARD_NAME := crux
+TARGET_NO_BOOTLOADER := true
+
+# HIDL
+DEVICE_MANIFEST_FILE := $(DEVICE_PATH)/manifest.xml
+DEVICE_MATRIX_FILE := $(DEVICE_PATH)/compatibility_matrix.xml
+DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := $(DEVICE_PATH)/framework_compatibility_matrix.xml
+
+# Kernel
+BOARD_KERNEL_IMAGE_NAME := Image-dtb
+TARGET_KERNEL_CONFIG := crux_defconfig
+TARGET_KERNEL_SOURCE := kernel/xiaomi/crux
+
+# Platform
+TARGET_BOARD_PLATFORM := msmnile
+BOARD_USES_QCOM_HARDWARE := true
+
+# Recovery
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab.qcom
+
+# Releasetools
+TARGET_RELEASETOOLS_EXTENSIONS := $(DEVICE_PATH)
+
+# Partitions
+# Explicit sizes from the official crux fastboot ROM partition.xml. The package
+# exposes discrete system/vendor partitions, so do not treat super_dummy as a
+# real crux super partition.
+BOARD_BOOTIMAGE_PARTITION_SIZE := 134217728
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 134217728
+BOARD_DTBOIMG_PARTITION_SIZE := 33554432
+BOARD_VBMETAIMAGE_PARTITION_SIZE := 131072
+BOARD_VENDORIMAGE_PARTITION_SIZE := 2147483648
+BOARD_SYSTEMIMAGE_PARTITION_SIZE := 4831838208
+TARGET_COPY_OUT_VENDOR := vendor
+
+# Properties
+TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system_prop.mk
+TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor_prop.mk
+
+# Security patch level
+VENDOR_SECURITY_PATCH := 2019-08-01
