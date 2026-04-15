@@ -24,7 +24,7 @@ VENDOR=xiaomi
 MY_DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "${MY_DIR}" ]]; then MY_DIR="${PWD}"; fi
 
-ANDROID_ROOT="${MY_DIR}"/../..
+ANDROID_ROOT="${MY_DIR}"/../../..
 
 HELPER="${ANDROID_ROOT}/tools/extract-utils/extract_utils.sh"
 if [ ! -f "${HELPER}" ]; then
@@ -32,44 +32,6 @@ if [ ! -f "${HELPER}" ]; then
     exit 1
 fi
 source "${HELPER}"
-
-AUTHORITATIVE_VENDOR_DIR="${ANDROID_ROOT}/vendor_and_device/vendor_${VENDOR}_${DEVICE}"
-LEGACY_VENDOR_DIR="${ANDROID_ROOT}/vendor/${VENDOR}/${DEVICE}"
-CREATED_VENDOR_LINK=false
-
-function cleanup_vendor_dir() {
-    if [ "${CREATED_VENDOR_LINK}" = "true" ] && [ -L "${LEGACY_VENDOR_DIR}" ]; then
-        rm -f "${LEGACY_VENDOR_DIR}"
-    fi
-}
-
-function ensure_vendor_dir() {
-    if [ ! -d "${AUTHORITATIVE_VENDOR_DIR}" ]; then
-        echo "Unable to find authoritative vendor directory at ${AUTHORITATIVE_VENDOR_DIR}"
-        exit 1
-    fi
-
-    mkdir -p "$(dirname "${LEGACY_VENDOR_DIR}")"
-
-    if [ -L "${LEGACY_VENDOR_DIR}" ]; then
-        if [ "$(readlink -f "${LEGACY_VENDOR_DIR}")" != "$(readlink -f "${AUTHORITATIVE_VENDOR_DIR}")" ]; then
-            echo "Legacy vendor path ${LEGACY_VENDOR_DIR} does not point to ${AUTHORITATIVE_VENDOR_DIR}"
-            exit 1
-        fi
-        return
-    fi
-
-    if [ -e "${LEGACY_VENDOR_DIR}" ]; then
-        echo "Legacy vendor path ${LEGACY_VENDOR_DIR} already exists and is not a symlink"
-        exit 1
-    fi
-
-    ln -s "${AUTHORITATIVE_VENDOR_DIR}" "${LEGACY_VENDOR_DIR}"
-    CREATED_VENDOR_LINK=true
-}
-
-trap cleanup_vendor_dir EXIT
-ensure_vendor_dir
 
 # Default to sanitizing the vendor folder before extraction
 CLEAN_VENDOR=true
@@ -96,6 +58,22 @@ done
 if [ -z "${SRC}" ]; then
     SRC="adb"
 fi
+
+function blob_fixup() {
+    case "${1}" in
+    system_ext/lib64/libwfdnative.so)
+        patchelf --remove-needed "android.hidl.base@1.0.so" "${2}"
+        ;;
+    vendor/lib64/hw/camera.qcom.so)
+        patchelf --remove-needed "libMegviiFacepp-0.5.2.so" "${2}"
+        patchelf --remove-needed "libmegface.so" "${2}"
+        patchelf --add-needed "libshim_megvii.so" "${2}"
+        ;;
+    vendor/lib64/camera/components/com.qti.node.watermark.so)
+        patchelf --add-needed "libpiex_shim.so" "${2}"
+        ;;
+    esac
+}
 
 # Initialize the helper
 setup_vendor "${DEVICE}" "${VENDOR}" "${ANDROID_ROOT}" true "${CLEAN_VENDOR}"

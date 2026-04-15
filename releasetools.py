@@ -14,124 +14,73 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import importlib
-from typing import Any
+import common
+import re
 
-common = importlib.import_module("common")
+def FullOTA_InstallBegin(info):
+  input_zip = info.input_zip
+  AddImage(info, "RADIO", input_zip, "super_dummy.img", "/tmp/super_dummy.img");
+  info.script.AppendExtra('package_extract_file("install/bin/flash_super_dummy.sh", "/tmp/flash_super_dummy.sh");')
+  info.script.AppendExtra('set_metadata("/tmp/flash_super_dummy.sh", "uid", 0, "gid", 0, "mode", 0755);')
+  info.script.AppendExtra('run_program("/tmp/flash_super_dummy.sh");')
+  return
 
+def FullOTA_InstallEnd(info):
+  input_zip = info.input_zip
+  OTA_UpdateFirmware(info)
+  OTA_InstallEnd(info, input_zip)
+  return
 
-# The official crux fastboot ROM exposes discrete system/vendor partitions. Keep
-# any super_dummy handling as external build glue instead of modeling a real
-# crux super partition in this device-specific firmware script.
-FIRMWARE_IMAGES = (
-    ("abl.elf", ("abl", "ablbak")),
-    ("aop.mbn", ("aop", "aopbak")),
-    ("BTFM.bin", ("bluetooth",)),
-    ("cmnlib.mbn", ("cmnlib", "cmnlibbak")),
-    ("cmnlib64.mbn", ("cmnlib64", "cmnlib64bak")),
-    ("devcfg.mbn", ("devcfg", "devcfgbak")),
-    ("dspso.bin", ("dsp",)),
-    ("hyp.mbn", ("hyp", "hypbak")),
-    ("imagefv.elf", ("imagefv",)),
-    ("km4.mbn", ("keymaster", "keymasterbak")),
-    ("NON-HLOS.bin", ("modem",)),
-    ("qupv3fw.elf", ("qupfw", "qupfwbak")),
-    ("storsec.mbn", ("storsec",)),
-    ("tz.mbn", ("tz", "tzbak")),
-    ("uefi_sec.mbn", ("uefisecapp", "uefisecappbak")),
-    ("xbl.elf", ("xbl", "xblbak")),
-    ("xbl_config.elf", ("xbl_config", "xbl_configbak")),
-)
+def IncrementalOTA_InstallEnd(info):
+  input_zip = info.target_zip
+  OTA_UpdateFirmware(info)
+  OTA_InstallEnd(info, input_zip)
+  return
 
-SUPER_DUMMY_SCRIPT = "install/bin/flash_super_dummy.sh"
+def OTA_UpdateFirmware(info):
+  info.script.AppendExtra('package_extract_file("install/firmware-update/abl.elf", "/dev/block/bootdevice/by-name/abl");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/abl.elf", "/dev/block/bootdevice/by-name/ablbak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/aop.mbn", "/dev/block/bootdevice/by-name/aop");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/aop.mbn", "/dev/block/bootdevice/by-name/aopbak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/BTFM.bin", "/dev/block/bootdevice/by-name/bluetooth");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/cmnlib.mbn", "/dev/block/bootdevice/by-name/cmnlib");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/cmnlib.mbn", "/dev/block/bootdevice/by-name/cmnlibbak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/cmnlib64.mbn", "/dev/block/bootdevice/by-name/cmnlib64");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/cmnlib64.mbn", "/dev/block/bootdevice/by-name/cmnlib64bak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/devcfg.mbn", "/dev/block/bootdevice/by-name/devcfg");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/devcfg.mbn", "/dev/block/bootdevice/by-name/devcfgbak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/dspso.bin", "/dev/block/bootdevice/by-name/dsp");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/hyp.mbn", "/dev/block/bootdevice/by-name/hyp");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/hypvm.mbn", "/dev/block/bootdevice/by-name/hypbak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/ifaa.img", "/dev/block/bootdevice/by-name/ifaa");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/imagefv.elf", "/dev/block/bootdevice/by-name/imagefv");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/km4.mbn", "/dev/block/bootdevice/by-name/keymaster");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/km4.mbn", "/dev/block/bootdevice/by-name/keymasterbak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/NON-HLOS.bin", "/dev/block/bootdevice/by-name/modem");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/qupv3fw.elf", "/dev/block/bootdevice/by-name/qupfw");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/qupv3fw.elf", "/dev/block/bootdevice/by-name/qupfwbak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/storsec.mbn", "/dev/block/bootdevice/by-name/storsec");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/tz.mbn", "/dev/block/bootdevice/by-name/tz");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/tz.mbn", "/dev/block/bootdevice/by-name/tzbak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/uefi_sec.mbn", "/dev/block/bootdevice/by-name/uefisecapp");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/uefi_sec.mbn", "/dev/block/bootdevice/by-name/uefisecappbak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/xbl.elf", "/dev/block/bootdevice/by-name/xbl");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/xbl.elf", "/dev/block/bootdevice/by-name/xblbak");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/xbl_config.elf", "/dev/block/bootdevice/by-name/xbl_config");')
+  info.script.AppendExtra('package_extract_file("install/firmware-update/xbl_config.elf", "/dev/block/bootdevice/by-name/xbl_configbak");')
 
-PARTITION_IMAGES = (
-    ("dtbo.img", "/dev/block/bootdevice/by-name/dtbo"),
-    ("vbmeta.img", "/dev/block/bootdevice/by-name/vbmeta"),
-)
-
-
-def FullOTA_InstallBegin(info: Any) -> None:
-    OTA_InstallSuperDummy(info, info.input_zip)
+def AddImage(info, dir, input_zip, basename, dest):
+  path = dir + "/" + basename
+  if path not in input_zip.namelist():
     return
 
+  data = input_zip.read(path)
+  common.ZipWriteStr(info.output_zip, basename, data)
+  info.script.Print("Flashing {} image".format(dest.split('/')[-1]))
+  info.script.AppendExtra('package_extract_file("%s", "%s");' % (basename, dest))
 
-def FullOTA_InstallEnd(info: Any) -> None:
-    input_zip = info.input_zip
-    OTA_UpdateFirmware(info)
-    OTA_InstallEnd(info, input_zip)
-    return
-
-
-def IncrementalOTA_InstallEnd(info: Any) -> None:
-    input_zip = info.target_zip
-    OTA_UpdateFirmware(info)
-    OTA_InstallEnd(info, input_zip)
-    return
-
-
-def OTA_UpdateFirmware(info: Any) -> None:
-    info.script.Print("Patching official crux firmware images...")
-
-    for image, partitions in FIRMWARE_IMAGES:
-        for partition in partitions:
-            info.script.AppendExtra(
-                'package_extract_file("install/firmware-update/{image}", "/dev/block/bootdevice/by-name/{partition}");'.format(
-                    image=image, partition=partition
-                )
-            )
-
-
-def OTA_InstallSuperDummy(info: Any, input_zip: Any) -> None:
-    if SUPER_DUMMY_SCRIPT not in input_zip.namelist():
-        info.script.Print("Skipping optional crux super_dummy helper wiring")
-        return
-
-    if not AddImage(
-        info, input_zip, "super_dummy.img", "/tmp/super_dummy.img", directory="RADIO"
-    ):
-        info.script.Print("Skipping optional crux super_dummy compatibility image")
-        return
-
-    common.ZipWriteStr(
-        info.output_zip, SUPER_DUMMY_SCRIPT, input_zip.read(SUPER_DUMMY_SCRIPT)
-    )
-    info.script.Print("Applying optional crux super_dummy compatibility image...")
-    info.script.AppendExtra(
-        'package_extract_file("{script}", "/tmp/flash_super_dummy.sh");'.format(
-            script=SUPER_DUMMY_SCRIPT
-        )
-    )
-    info.script.AppendExtra(
-        'set_metadata("/tmp/flash_super_dummy.sh", "uid", 0, "gid", 0, "mode", 0755);'
-    )
-    info.script.AppendExtra('run_program("/tmp/flash_super_dummy.sh");')
-
-
-def AddImage(
-    info: Any,
-    input_zip: Any,
-    basename: str,
-    destination: str,
-    directory: str = "IMAGES",
-) -> bool:
-    path = "{}/{}".format(directory, basename)
-    if path not in input_zip.namelist():
-        return False
-
-    data = input_zip.read(path)
-    common.ZipWriteStr(info.output_zip, basename, data)
-    info.script.Print("Flashing {} image".format(destination.rsplit("/", 1)[-1]))
-    info.script.AppendExtra(
-        'package_extract_file("{image}", "{destination}");'.format(
-            image=basename, destination=destination
-        )
-    )
-    return True
-
-
-def OTA_InstallEnd(info: Any, input_zip: Any) -> None:
-    for image, destination in PARTITION_IMAGES:
-        AddImage(info, input_zip, image, destination)
-
-    return
+def OTA_InstallEnd(info, input_zip):
+  info.script.Print("Patching firmware images...")
+  AddImage(info, "IMAGES", input_zip, "dtbo.img", "/dev/block/bootdevice/by-name/dtbo")
+  AddImage(info, "IMAGES", input_zip, "vbmeta.img", "/dev/block/bootdevice/by-name/vbmeta")
+  return

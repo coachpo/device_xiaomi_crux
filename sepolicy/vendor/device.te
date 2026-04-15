@@ -1,0 +1,7 @@
+# Fingerprint
+type fingerprint_device, dev_type;
+
+# Sound
+type sound_device, dev_type;
+
+typeattribute system_block_device super_block_device_type;

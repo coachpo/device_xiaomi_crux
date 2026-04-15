@@ -25,7 +25,7 @@ INITIAL_COPYRIGHT_YEAR=2020
 MY_DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "${MY_DIR}" ]]; then MY_DIR="${PWD}"; fi
 
-ANDROID_ROOT="${MY_DIR}/../.."
+ANDROID_ROOT="${MY_DIR}/../../.."
 
 HELPER="${ANDROID_ROOT}/tools/extract-utils/extract_utils.sh"
 if [ ! -f "${HELPER}" ]; then
@@ -33,44 +33,6 @@ if [ ! -f "${HELPER}" ]; then
     exit 1
 fi
 source "${HELPER}"
-
-AUTHORITATIVE_VENDOR_DIR="${ANDROID_ROOT}/vendor_and_device/vendor_${VENDOR}_${DEVICE}"
-LEGACY_VENDOR_DIR="${ANDROID_ROOT}/vendor/${VENDOR}/${DEVICE}"
-CREATED_VENDOR_LINK=false
-
-function cleanup_vendor_dir() {
-    if [ "${CREATED_VENDOR_LINK}" = "true" ] && [ -L "${LEGACY_VENDOR_DIR}" ]; then
-        rm -f "${LEGACY_VENDOR_DIR}"
-    fi
-}
-
-function ensure_vendor_dir() {
-    if [ ! -d "${AUTHORITATIVE_VENDOR_DIR}" ]; then
-        echo "Unable to find authoritative vendor directory at ${AUTHORITATIVE_VENDOR_DIR}"
-        exit 1
-    fi
-
-    mkdir -p "$(dirname "${LEGACY_VENDOR_DIR}")"
-
-    if [ -L "${LEGACY_VENDOR_DIR}" ]; then
-        if [ "$(readlink -f "${LEGACY_VENDOR_DIR}")" != "$(readlink -f "${AUTHORITATIVE_VENDOR_DIR}")" ]; then
-            echo "Legacy vendor path ${LEGACY_VENDOR_DIR} does not point to ${AUTHORITATIVE_VENDOR_DIR}"
-            exit 1
-        fi
-        return
-    fi
-
-    if [ -e "${LEGACY_VENDOR_DIR}" ]; then
-        echo "Legacy vendor path ${LEGACY_VENDOR_DIR} already exists and is not a symlink"
-        exit 1
-    fi
-
-    ln -s "${AUTHORITATIVE_VENDOR_DIR}" "${LEGACY_VENDOR_DIR}"
-    CREATED_VENDOR_LINK=true
-}
-
-trap cleanup_vendor_dir EXIT
-ensure_vendor_dir
 
 # Initialize the helper
 setup_vendor "${DEVICE}" "${VENDOR}" "${ANDROID_ROOT}"
