@@ -14,60 +14,75 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import common
+import common  # pyright: ignore[reportMissingImports]
 import re
 
+FIRMWARE_IMAGES = (
+  ("abl.elf", "/dev/block/bootdevice/by-name/abl"),
+  ("abl.elf", "/dev/block/bootdevice/by-name/ablbak"),
+  ("aop.mbn", "/dev/block/bootdevice/by-name/aop"),
+  ("aop.mbn", "/dev/block/bootdevice/by-name/aopbak"),
+  ("BTFM.bin", "/dev/block/bootdevice/by-name/bluetooth"),
+  ("cmnlib.mbn", "/dev/block/bootdevice/by-name/cmnlib"),
+  ("cmnlib.mbn", "/dev/block/bootdevice/by-name/cmnlibbak"),
+  ("cmnlib64.mbn", "/dev/block/bootdevice/by-name/cmnlib64"),
+  ("cmnlib64.mbn", "/dev/block/bootdevice/by-name/cmnlib64bak"),
+  ("devcfg.mbn", "/dev/block/bootdevice/by-name/devcfg"),
+  ("devcfg.mbn", "/dev/block/bootdevice/by-name/devcfgbak"),
+  ("dspso.bin", "/dev/block/bootdevice/by-name/dsp"),
+  ("hyp.mbn", "/dev/block/bootdevice/by-name/hyp"),
+  ("imagefv.elf", "/dev/block/bootdevice/by-name/imagefv"),
+  ("km4.mbn", "/dev/block/bootdevice/by-name/keymaster"),
+  ("km4.mbn", "/dev/block/bootdevice/by-name/keymasterbak"),
+  ("NON-HLOS.bin", "/dev/block/bootdevice/by-name/modem"),
+  ("qupv3fw.elf", "/dev/block/bootdevice/by-name/qupfw"),
+  ("qupv3fw.elf", "/dev/block/bootdevice/by-name/qupfwbak"),
+  ("storsec.mbn", "/dev/block/bootdevice/by-name/storsec"),
+  ("tz.mbn", "/dev/block/bootdevice/by-name/tz"),
+  ("tz.mbn", "/dev/block/bootdevice/by-name/tzbak"),
+  ("uefi_sec.mbn", "/dev/block/bootdevice/by-name/uefisecapp"),
+  ("uefi_sec.mbn", "/dev/block/bootdevice/by-name/uefisecappbak"),
+  ("xbl.elf", "/dev/block/bootdevice/by-name/xbl"),
+  ("xbl.elf", "/dev/block/bootdevice/by-name/xblbak"),
+  ("xbl_config.elf", "/dev/block/bootdevice/by-name/xbl_config"),
+  ("xbl_config.elf", "/dev/block/bootdevice/by-name/xbl_configbak"),
+)
+
 def FullOTA_InstallBegin(info):
-  input_zip = info.input_zip
-  AddImage(info, "RADIO", input_zip, "super_dummy.img", "/tmp/super_dummy.img");
-  info.script.AppendExtra('package_extract_file("install/bin/flash_super_dummy.sh", "/tmp/flash_super_dummy.sh");')
-  info.script.AppendExtra('set_metadata("/tmp/flash_super_dummy.sh", "uid", 0, "gid", 0, "mode", 0755);')
-  info.script.AppendExtra('run_program("/tmp/flash_super_dummy.sh");')
   return
 
 def FullOTA_InstallEnd(info):
   input_zip = info.input_zip
-  OTA_UpdateFirmware(info)
+  OTA_UpdateFirmware(info, input_zip)
   OTA_InstallEnd(info, input_zip)
   return
 
 def IncrementalOTA_InstallEnd(info):
   input_zip = info.target_zip
-  OTA_UpdateFirmware(info)
+  OTA_UpdateFirmware(info, input_zip)
   OTA_InstallEnd(info, input_zip)
   return
 
-def OTA_UpdateFirmware(info):
-  info.script.AppendExtra('package_extract_file("install/firmware-update/abl.elf", "/dev/block/bootdevice/by-name/abl");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/abl.elf", "/dev/block/bootdevice/by-name/ablbak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/aop.mbn", "/dev/block/bootdevice/by-name/aop");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/aop.mbn", "/dev/block/bootdevice/by-name/aopbak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/BTFM.bin", "/dev/block/bootdevice/by-name/bluetooth");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/cmnlib.mbn", "/dev/block/bootdevice/by-name/cmnlib");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/cmnlib.mbn", "/dev/block/bootdevice/by-name/cmnlibbak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/cmnlib64.mbn", "/dev/block/bootdevice/by-name/cmnlib64");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/cmnlib64.mbn", "/dev/block/bootdevice/by-name/cmnlib64bak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/devcfg.mbn", "/dev/block/bootdevice/by-name/devcfg");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/devcfg.mbn", "/dev/block/bootdevice/by-name/devcfgbak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/dspso.bin", "/dev/block/bootdevice/by-name/dsp");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/hyp.mbn", "/dev/block/bootdevice/by-name/hyp");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/hypvm.mbn", "/dev/block/bootdevice/by-name/hypbak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/ifaa.img", "/dev/block/bootdevice/by-name/ifaa");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/imagefv.elf", "/dev/block/bootdevice/by-name/imagefv");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/km4.mbn", "/dev/block/bootdevice/by-name/keymaster");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/km4.mbn", "/dev/block/bootdevice/by-name/keymasterbak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/NON-HLOS.bin", "/dev/block/bootdevice/by-name/modem");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/qupv3fw.elf", "/dev/block/bootdevice/by-name/qupfw");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/qupv3fw.elf", "/dev/block/bootdevice/by-name/qupfwbak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/storsec.mbn", "/dev/block/bootdevice/by-name/storsec");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/tz.mbn", "/dev/block/bootdevice/by-name/tz");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/tz.mbn", "/dev/block/bootdevice/by-name/tzbak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/uefi_sec.mbn", "/dev/block/bootdevice/by-name/uefisecapp");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/uefi_sec.mbn", "/dev/block/bootdevice/by-name/uefisecappbak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/xbl.elf", "/dev/block/bootdevice/by-name/xbl");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/xbl.elf", "/dev/block/bootdevice/by-name/xblbak");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/xbl_config.elf", "/dev/block/bootdevice/by-name/xbl_config");')
-  info.script.AppendExtra('package_extract_file("install/firmware-update/xbl_config.elf", "/dev/block/bootdevice/by-name/xbl_configbak");')
+def AddFirmware(info, input_zip, basename):
+  path = "RADIO/" + basename
+  if path not in input_zip.namelist():
+    return False
+
+  common.ZipWriteStr(info.output_zip,
+                     "install/firmware-update/" + basename,
+                     input_zip.read(path))
+  return True
+
+def OTA_UpdateFirmware(info, input_zip):
+  packaged_firmware = set()
+  for basename, dest in FIRMWARE_IMAGES:
+    if basename not in packaged_firmware and AddFirmware(info, input_zip, basename):
+      packaged_firmware.add(basename)
+
+    if basename in packaged_firmware:
+      info.script.AppendExtra(
+          'package_extract_file("install/firmware-update/%s", "%s");' %
+          (basename, dest))
 
 def AddImage(info, dir, input_zip, basename, dest):
   path = dir + "/" + basename
