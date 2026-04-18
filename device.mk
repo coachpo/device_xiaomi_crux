@@ -25,7 +25,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 $(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
 
 # Call the proprietary setup
-$(call inherit-product, vendor/xiaomi/crux/crux-vendor.mk)
+$(call inherit-product, vendor/xiaomi/cepheus/cepheus-vendor.mk)
 
 # Additional native libraries
 PRODUCT_COPY_FILES += \
@@ -186,7 +186,7 @@ PRODUCT_PACKAGES += \
 
 # Fingerprint
 PRODUCT_PACKAGES += \
-    android.hardware.biometrics.fingerprint@2.3-service.crux \
+    android.hardware.biometrics.fingerprint@2.3-service.cepheus \
     android.hardware.biometrics.fingerprint@2.3.vendor \
     vendor.goodix.hardware.biometrics.fingerprint@2.1.vendor
 
@@ -283,12 +283,12 @@ PRODUCT_PACKAGES += \
 
 # Lights
 PRODUCT_PACKAGES += \
-    android.hardware.lights-service.crux
+    android.hardware.lights-service.cepheus
 
 # LiveDisplay
 PRODUCT_PACKAGES += \
     vendor.lineage.livedisplay@2.0-service-sdm \
-    vendor.lineage.livedisplay@2.1-service.crux
+    vendor.lineage.livedisplay@2.1-service.cepheus
 
 # Media
 PRODUCT_PACKAGES += \
@@ -378,9 +378,16 @@ DEVICE_PACKAGE_OVERLAYS += \
     $(LOCAL_PATH)/overlay \
     $(LOCAL_PATH)/overlay-pe
 
+# Partitions
+PRODUCT_USE_DYNAMIC_PARTITIONS := true
+PRODUCT_RETROFIT_DYNAMIC_PARTITIONS := true
+
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/partitions/flash_super_dummy.sh:install/bin/flash_super_dummy.sh
+
 # Power
 PRODUCT_PACKAGES += \
-    android.hardware.power-service.crux-libperfmgr \
+    android.hardware.power-service.cepheus-libperfmgr \
     android.hardware.power.stats@1.0-service.xiaomi
 
 PRODUCT_COPY_FILES += \
@@ -432,7 +439,7 @@ PRODUCT_PACKAGES += \
     vendor.qti.hardware.display.mapper@1.1.vendor
 
 PRODUCT_PACKAGES += \
-    sensors.crux_udfps
+    sensors.cepheus_udfps
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/sensors/hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/hals.conf
@@ -481,7 +488,7 @@ PRODUCT_COPY_FILES += \
 
 # Thermal
 PRODUCT_PACKAGES += \
-    android.hardware.thermal@2.0-service.crux \
+    android.hardware.thermal@2.0-service.cepheus \
     thermal_logd
 
 PRODUCT_COPY_FILES += \

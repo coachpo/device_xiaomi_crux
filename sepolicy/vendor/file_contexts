@@ -19,10 +19,10 @@
 /sys/devices/platform/soc/soc:qcom,dsi-display-primary/dimlayer_hbm                                    u:object_r:sysfs_fod:s0
 /sys/devices/virtual/touch/tp_dev/fod_status                                                           u:object_r:sysfs_fod:s0
 /sys/devices/virtual/touch/tp_dev/fod_state                                                            u:object_r:vendor_sysfs_sensors:s0
-/vendor/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.3-service\.crux                        u:object_r:hal_fingerprint_default_exec:s0
+/vendor/bin/hw/android\.hardware\.biometrics\.fingerprint@2\.3-service\.cepheus                        u:object_r:hal_fingerprint_default_exec:s0
 
 # HALs
-/vendor/bin/hw/android\.hardware\.lights-service\.crux                                              u:object_r:hal_light_default_exec:s0
+/vendor/bin/hw/android\.hardware\.lights-service\.cepheus                                              u:object_r:hal_light_default_exec:s0
 
 # Hexagon DSP-side executable needed for Halide operation
 # This is labeled as public_adsprpcd_file as it needs to be read by apps
@@ -37,7 +37,7 @@
 /dev/lirc0                                                                                             u:object_r:ir_spi_device:s0
 
 # Livedisplay
-/vendor/bin/hw/vendor\.lineage\.livedisplay@2\.1-service\.crux                                      u:object_r:hal_lineage_livedisplay_qti_exec:s0
+/vendor/bin/hw/vendor\.lineage\.livedisplay@2\.1-service\.cepheus                                      u:object_r:hal_lineage_livedisplay_qti_exec:s0
 
 # Mlipay
 /vendor/bin/mlipayd@1\.1                                                                               u:object_r:hal_mlipay_default_exec:s0
@@ -46,13 +46,13 @@
 /vendor/bin/remosaic_daemon                                                                            u:object_r:remosaic_daemon_exec:s0
 
 # Pixel Powerhal
-/vendor/bin/hw/android\.hardware\.power-service\.crux-libperfmgr                                    u:object_r:hal_power_default_exec:s0
+/vendor/bin/hw/android\.hardware\.power-service\.cepheus-libperfmgr                                    u:object_r:hal_power_default_exec:s0
 
 # Pixel Powerstats
 /vendor/bin/hw/android\.hardware\.power\.stats@1\.0-service\.xiaomi                                    u:object_r:hal_power_stats_default_exec:s0
 
 # Pixel Thermalhal
-/vendor/bin/hw/android\.hardware\.thermal@2\.0-service\.crux                                        u:object_r:hal_thermal_default_exec:s0
+/vendor/bin/hw/android\.hardware\.thermal@2\.0-service\.cepheus                                        u:object_r:hal_thermal_default_exec:s0
 /vendor/bin/thermal_logd                                                                               u:object_r:init-thermal-logging-sh_exec:s0
 
 # Sensors

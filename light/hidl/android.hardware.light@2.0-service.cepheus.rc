@@ -9,8 +9,10 @@ on boot
     chmod 0644 /sys/class/leds/white/brightness
     chmod 0644 /sys/class/leds/white/breath
 
-service vendor.light /vendor/bin/hw/android.hardware.lights-service.crux
+service vendor.light-hal-2-0 /vendor/bin/hw/android.hardware.light@2.0-service.cepheus
+    interface android.hardware.light@2.0::ILight default
     class hal
     user system
     group system
+    # shutting off lights while powering-off
     shutdown critical

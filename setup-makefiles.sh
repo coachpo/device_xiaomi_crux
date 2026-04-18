@@ -17,7 +17,7 @@
 
 set -e
 
-DEVICE=crux
+DEVICE=cepheus
 VENDOR=xiaomi
 INITIAL_COPYRIGHT_YEAR=2020
 

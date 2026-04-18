@@ -1,13 +1,13 @@
 cc_binary {
-  name: "android.hardware.thermal@2.0-service.crux",
+  name: "android.hardware.thermal@2.0-service.cepheus",
   defaults: [
     "hidl_defaults",
   ],
   vendor: true,
   relative_install_path: "hw",
-  vintf_fragments: ["android.hardware.thermal@2.0-service.crux.xml"],
+  vintf_fragments: ["android.hardware.thermal@2.0-service.cepheus.xml"],
   init_rc: [
-    "android.hardware.thermal@2.0-service.crux.rc",
+    "android.hardware.thermal@2.0-service.cepheus.rc",
   ],
   srcs: [
     "service.cpp",

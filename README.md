@@ -2,10 +2,10 @@ Copyright &copy; 2020 DerpFest
 
 Copyright &copy; 2020-2021 PixelExperience
 
-Device configuration for Xiaomi Mi9 Pro 5G
+Device configuration for Xiaomi Mi 9
 =========================================
 
-The Xiaomi Mi9 Pro 5G (codenamed _"crux"_) is a high-end smartphone from Xiaomi.
+The Xiaomi Mi 9 (codenamed _"cepheus"_) is a high-end smartphone from Xiaomi.
 
 It was announced in February 2019. Release date was in March 2019.
 
@@ -26,4 +26,4 @@ Camera  | 48MP(Primary),12MP(Telephoto), 16MP(Ultrawide), dual-LED (dual tone) f
 ## Device picture
 
 
-![Xiaomi Mi9 Pro 5G](https://xiaomi-mi.com/uploads/CatalogueImage/mi9%20(3)_17409_1550674081.jpg "Xiaomi Mi9 Pro 5G in black")
+![Xiaomi Mi 9](https://xiaomi-mi.com/uploads/CatalogueImage/mi9%20(3)_17409_1550674081.jpg "Xiaomi Mi 9 in black")

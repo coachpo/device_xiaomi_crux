@@ -14,9 +14,9 @@
 // limitations under the License.
 
 cc_binary {
-    name: "vendor.lineage.livedisplay@2.1-service.crux",
-    vintf_fragments: ["vendor.lineage.livedisplay@2.1-service.crux.xml"],
-    init_rc: ["vendor.lineage.livedisplay@2.1-service.crux.rc"],
+    name: "vendor.lineage.livedisplay@2.1-service.cepheus",
+    vintf_fragments: ["vendor.lineage.livedisplay@2.1-service.cepheus.xml"],
+    init_rc: ["vendor.lineage.livedisplay@2.1-service.cepheus.rc"],
     defaults: ["hidl_defaults"],
     relative_install_path: "hw",
     srcs: [
