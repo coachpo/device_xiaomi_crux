@@ -18,8 +18,8 @@
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 
-# Inherit from cepheus device
-$(call inherit-product, device/xiaomi/cepheus/device.mk)
+# Inherit from crux device
+$(call inherit-product, device/xiaomi/crux/device.mk)
 
 # Inherit some common PE stuff.
 $(call inherit-product, vendor/aosp/config/common_full_phone.mk)
@@ -29,14 +29,14 @@ TARGET_SUPPORTS_QUICK_TAP := true
 TARGET_BOOT_ANIMATION_RES := 1080
 
 # Device identifier
-PRODUCT_NAME := aosp_cepheus
-PRODUCT_DEVICE := cepheus
+PRODUCT_NAME := aosp_crux
+PRODUCT_DEVICE := crux
 PRODUCT_BRAND := Xiaomi
-PRODUCT_MODEL := Mi 9
+PRODUCT_MODEL := Mi9 Pro 5G
 PRODUCT_MANUFACTURER := Xiaomi
 
 # Recovery
 TARGET_USES_AOSP_RECOVERY := true
 
 # Include firmware
-$(call inherit-product, vendor/xiaomi-firmware/cepheus/firmware.mk)
+$(call inherit-product, vendor/xiaomi-firmware/crux/firmware.mk)
