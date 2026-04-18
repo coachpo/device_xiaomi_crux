@@ -20,7 +20,7 @@ import os
 import sys
 from hashlib import sha1
 
-device = 'cepheus'
+device = 'crux'
 vendor = 'xiaomi'
 
 with open('proprietary-files.txt', 'r') as f:
@@ -40,6 +40,8 @@ def cleanup():
 
 
 def update():
+    needSHA1 = False
+
     for index, line in enumerate(lines):
         # Skip empty lines
         if len(line) == 0:
@@ -70,4 +72,4 @@ else:
     update()
 
 with open('proprietary-files.txt', 'w') as file:
-    file.write('\n'.join(lines) + '\n')
+    _ = file.write('\n'.join(lines) + '\n')
