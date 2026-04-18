@@ -1,4 +1,4 @@
-service vendor.power-hal-aidl /vendor/bin/hw/android.hardware.power-service.cepheus-libperfmgr
+service vendor.power-hal-aidl /vendor/bin/hw/android.hardware.power-service.crux-libperfmgr
     class hal
     user root
     group system

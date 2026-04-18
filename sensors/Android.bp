@@ -5,7 +5,7 @@
 //
 
 cc_library_shared {
-    name: "sensors.cepheus_udfps",
+    name: "sensors.crux_udfps",
     defaults: ["hidl_defaults"],
     srcs: [
         "udfps_hal.cpp",

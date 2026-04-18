@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.lights-service_cepheus"
+#define LOG_TAG "android.hardware.lights-service_crux"
 
 #include "Lights.h"
 #include <android-base/file.h>

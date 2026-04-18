@@ -15,8 +15,8 @@
 cc_binary {
     relative_install_path: "hw",
     defaults: ["hidl_defaults"],
-    name: "android.hardware.light@2.0-service.cepheus",
-    init_rc: ["hidl/android.hardware.light@2.0-service.cepheus.rc"],
+    name: "android.hardware.light@2.0-service.crux",
+    init_rc: ["hidl/android.hardware.light@2.0-service.crux.rc"],
     srcs: [
         "hidl/service.cpp",
         "hidl/Light.cpp",
@@ -33,10 +33,10 @@ cc_binary {
 }
 
 cc_binary {
-    name: "android.hardware.lights-service.cepheus",
+    name: "android.hardware.lights-service.crux",
     relative_install_path: "hw",
-    init_rc: ["aidl/android.hardware.lights.cepheus.rc"],
-    vintf_fragments: ["aidl/android.hardware.lights.cepheus.xml"],
+    init_rc: ["aidl/android.hardware.lights.crux.rc"],
+    vintf_fragments: ["aidl/android.hardware.lights.crux.xml"],
     vendor: true,
     shared_libs: [
         "libbase",
