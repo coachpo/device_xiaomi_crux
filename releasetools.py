@@ -14,138 +14,54 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Crux non-A/B OTA hooks. The installed stock firmware is retained."""
+
 import common
-import re
+
+
+# These Android images must match the boot/system images in the same OTA.
+# Bootloader, modem and other stock firmware partitions are never updated here.
+ANDROID_IMAGES = ("dtbo.img", "vbmeta.img")
+
+
+def _validate_target_files(input_zip):
+    entries = input_zip.infolist()
+    names = [entry.filename for entry in entries]
+    for entry in entries:
+        if not entry.is_dir() and entry.filename.startswith(
+                ("RADIO/", "INSTALL/firmware-update/")):
+            raise ValueError(
+                "Crux ROM OTAs must not bundle stock firmware: " + entry.filename)
+    for image in ANDROID_IMAGES:
+        path = "IMAGES/" + image
+        if names.count(path) != 1:
+            raise ValueError("Crux target-files must contain exactly one " + path)
+        if input_zip.getinfo(path).file_size == 0:
+            raise ValueError("Crux target-files contains an empty " + path)
+
+
+def _install_android_images(info, input_zip):
+    _validate_target_files(input_zip)
+    for image in ANDROID_IMAGES:
+        common.ZipWriteStr(info.output_zip, image, input_zip.read("IMAGES/" + image))
+        partition = image[:-4]
+        info.script.Print("Flashing {} image...".format(partition))
+        info.script.AppendExtra(
+            'assert(package_extract_file("%s", '
+            '"/dev/block/bootdevice/by-name/%s"));' % (image, partition))
 
 
 def FullOTA_InstallBegin(info):
-    return
+    _validate_target_files(info.input_zip)
 
 
 def FullOTA_InstallEnd(info):
-    input_zip = info.input_zip
-    OTA_UpdateFirmware(info)
-    OTA_InstallEnd(info, input_zip)
-    return
+    _install_android_images(info, info.input_zip)
+
+
+def IncrementalOTA_InstallBegin(info):
+    _validate_target_files(info.target_zip)
 
 
 def IncrementalOTA_InstallEnd(info):
-    input_zip = info.target_zip
-    OTA_UpdateFirmware(info)
-    OTA_InstallEnd(info, input_zip)
-    return
-
-
-def OTA_UpdateFirmware(info):
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/abl.elf", "/dev/block/bootdevice/by-name/abl");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/abl.elf", "/dev/block/bootdevice/by-name/ablbak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/aop.mbn", "/dev/block/bootdevice/by-name/aop");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/aop.mbn", "/dev/block/bootdevice/by-name/aopbak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/BTFM.bin", "/dev/block/bootdevice/by-name/bluetooth");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/cmnlib.mbn", "/dev/block/bootdevice/by-name/cmnlib");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/cmnlib.mbn", "/dev/block/bootdevice/by-name/cmnlibbak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/cmnlib64.mbn", "/dev/block/bootdevice/by-name/cmnlib64");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/cmnlib64.mbn", "/dev/block/bootdevice/by-name/cmnlib64bak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/devcfg.mbn", "/dev/block/bootdevice/by-name/devcfg");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/devcfg.mbn", "/dev/block/bootdevice/by-name/devcfgbak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/dspso.bin", "/dev/block/bootdevice/by-name/dsp");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/hyp.mbn", "/dev/block/bootdevice/by-name/hyp");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/hypvm.mbn", "/dev/block/bootdevice/by-name/hypbak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/ifaa.img", "/dev/block/bootdevice/by-name/ifaa");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/imagefv.elf", "/dev/block/bootdevice/by-name/imagefv");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/km4.mbn", "/dev/block/bootdevice/by-name/keymaster");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/km4.mbn", "/dev/block/bootdevice/by-name/keymasterbak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/NON-HLOS.bin", "/dev/block/bootdevice/by-name/modem");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/qupv3fw.elf", "/dev/block/bootdevice/by-name/qupfw");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/qupv3fw.elf", "/dev/block/bootdevice/by-name/qupfwbak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/storsec.mbn", "/dev/block/bootdevice/by-name/storsec");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/tz.mbn", "/dev/block/bootdevice/by-name/tz");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/tz.mbn", "/dev/block/bootdevice/by-name/tzbak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/uefi_sec.mbn", "/dev/block/bootdevice/by-name/uefisecapp");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/uefi_sec.mbn", "/dev/block/bootdevice/by-name/uefisecappbak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/xbl.elf", "/dev/block/bootdevice/by-name/xbl");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/xbl.elf", "/dev/block/bootdevice/by-name/xblbak");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/xbl_config.elf", "/dev/block/bootdevice/by-name/xbl_config");'
-    )
-    info.script.AppendExtra(
-        'package_extract_file("install/firmware-update/xbl_config.elf", "/dev/block/bootdevice/by-name/xbl_configbak");'
-    )
-
-
-def AddImage(info, dir, input_zip, basename, dest):
-    path = dir + "/" + basename
-    if path not in input_zip.namelist():
-        return
-
-    data = input_zip.read(path)
-    common.ZipWriteStr(info.output_zip, basename, data)
-    info.script.Print("Flashing {} image".format(dest.split("/")[-1]))
-    info.script.AppendExtra('package_extract_file("%s", "%s");' % (basename, dest))
-
-
-def OTA_InstallEnd(info, input_zip):
-    info.script.Print("Patching firmware images...")
-    AddImage(
-        info, "IMAGES", input_zip, "dtbo.img", "/dev/block/bootdevice/by-name/dtbo"
-    )
-    AddImage(
-        info, "IMAGES", input_zip, "vbmeta.img", "/dev/block/bootdevice/by-name/vbmeta"
-    )
-    return
+    _install_android_images(info, info.target_zip)

@@ -25,3 +25,11 @@ allow vendor_qti_init_shell {
 
 # Allow vendor_init to change watermark_scale_factor
 allow vendor_init proc_watermark_scale_factor:file w_file_perms;
+
+# Thermal symlink directories are created before the helper starts.
+allow vendor_init thermal_link_device:dir r_dir_perms;
+allow vendor_init thermal_link_device:lnk_file r_file_perms;
+
+# Affinity reads the named system threads and updates their cgroup membership.
+r_dir_file(vendor_qti_init_shell, system_server)
+r_dir_file(vendor_qti_init_shell, kernel)

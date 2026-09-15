@@ -10,6 +10,7 @@ on boot
     chmod 0644 /sys/class/leds/white/breath
 
 service vendor.light /vendor/bin/hw/android.hardware.lights-service.crux
+    interface aidl android.hardware.light.ILights/default
     class hal
     user system
     group system

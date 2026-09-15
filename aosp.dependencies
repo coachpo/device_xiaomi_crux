@@ -1,31 +1,26 @@
 [
  {
-   "repository" : "vendor_xiaomi_crux",
+   "repository" : "coachpo/vendor_xiaomi_crux",
    "target_path": "vendor/xiaomi/crux",
-   "remote"     : "pixel-devices-blobs",
-   "branch"     : "thirteen"
+   "remote"     : "github",
+   "branch"     : "thirteen-plus"
  },
  {
-   "repository" : "kernel_xiaomi_crux",
+   "repository" : "coachpo/kernel_xiaomi_crux",
    "target_path": "kernel/xiaomi/crux",
-   "branch"     : "thirteen"
+   "remote"     : "github",
+   "branch"     : "thirteen-plus"
  },
  {
    "repository" : "PixelExperience/hardware_xiaomi",
    "target_path": "hardware/xiaomi",
-   "branch"     : "thirteen"
- },
- {
-   "repository" : "vendor_xiaomi-firmware",
-   "target_path": "vendor/xiaomi-firmware",
-   "remote"     : "pixel-devices-blobs",
-   "clone-depth": "1",
-   "branch"     : "thirteen"
+   "remote"     : "github",
+   "branch"     : "9352b3ac9ce5d5f4c2adca0225a00ddeef9ef9cd"
  },
  {
    "repository" : "jjpprrrr/prelude-clang",
    "target_path": "prebuilts/clang/host/linux-x86/clang-prelude",
-   "branch"     : "master",
+   "branch"     : "ac8fce34dc0f6918672100d7a6e867a66b8afa8f",
    "clone-depth": "1",
    "remote"     : "gitlab"
  }

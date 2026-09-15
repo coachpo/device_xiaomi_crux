@@ -18,6 +18,7 @@
 #ifndef ANDROID_HARDWARE_BIOMETRICS_FINGERPRINT_V2_3_BIOMETRICSFINGERPRINT_H
 #define ANDROID_HARDWARE_BIOMETRICS_FINGERPRINT_V2_3_BIOMETRICSFINGERPRINT_H
 
+#include <android-base/unique_fd.h>
 #include <android/hardware/biometrics/fingerprint/2.3/IBiometricsFingerprint.h>
 #include <android/log.h>
 #include <hardware/hardware.h>
@@ -25,6 +26,9 @@
 #include <hidl/Status.h>
 #include <log/log.h>
 #include <vendor/xiaomi/hardware/fingerprintextension/1.0/IXiaomiFingerprint.h>
+
+#include <mutex>
+#include <thread>
 
 #include "fingerprint.h"
 
@@ -54,9 +58,6 @@ struct BiometricsFingerprint : public IBiometricsFingerprint, public IXiaomiFing
 
     status_t registerAsSystemService();
 
-    // Method to wrap legacy HAL with BiometricsFingerprint class
-    static IBiometricsFingerprint* getInstance();
-
     // Methods from ::android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint follow.
     Return<uint64_t> setNotify(
         const sp<IBiometricsFingerprintClientCallback>& clientCallback) override;
@@ -84,11 +85,20 @@ struct BiometricsFingerprint : public IBiometricsFingerprint, public IXiaomiFing
     std::mutex mClientCallbackMutex;
     sp<IBiometricsFingerprintClientCallback> mClientCallback;
     fingerprint_device_t* mDevice;
+    android::base::unique_fd mStopFd;
+    std::thread mFodThread;
 
     // Methods from ::android::hardware::biometrics::fingerprint::V2_3::IBiometricsFingerprint follow.
     Return<bool> isUdfps(uint32_t sensorId) override;
     Return<void> onFingerDown(uint32_t x, uint32_t y, float minor, float major) override;
     Return<void> onFingerUp() override;
+
+private:
+    void setFodMode(int mode);
+    void updateFodTouch(bool enabled);
+
+    std::mutex mFodMutex;
+    int mFodMode = 0;
 };
 
 }  // namespace implementation

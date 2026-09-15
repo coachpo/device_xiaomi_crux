@@ -8,4 +8,5 @@ service vendor.thermal.symlinks /vendor/bin/thermal_symlinks
     class hal
     user system
     group system
+    disabled
     oneshot

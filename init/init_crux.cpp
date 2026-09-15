@@ -66,6 +66,6 @@ void set_ro_product_prop(const std::string &prop, const std::string &value) {
 
 void vendor_load_properties() {
     set_ro_product_prop("device", "crux");
-    set_ro_product_prop("model", "MI 9");
+    set_ro_product_prop("model", "Mi9 Pro 5G");
     set_ro_product_prop("name", "crux");
 }

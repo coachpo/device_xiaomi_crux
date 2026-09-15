@@ -21,38 +21,61 @@
 
 #include <android-base/strings.h>
 #include <cutils/properties.h>
+#include <fcntl.h>
 #include <hardware/hardware.h>
 #include <hardware/hw_auth_token.h>
 #include <inttypes.h>
 #include <poll.h>
+#include <sys/eventfd.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <cstring>
 #include <fstream>
-#include <thread>
 
 #define COMMAND_NIT 10
 #define PARAM_NIT_FOD 1
 #define PARAM_NIT_NONE 0
 
-#define FOD_STATUS_PATH "/sys/devices/virtual/touch/tp_dev/fod_status"
-#define FOD_STATUS_ON 1
 #define FOD_STATUS_OFF 0
+#define FOD_STATUS_AUTHENTICATE 1
+#define FOD_STATUS_ENROLL 2
 
-#define DIMLAYER_HBM_PATH "/sys/devices/platform/soc/soc:qcom,dsi-display-primary/dimlayer_hbm"
-#define DIMLAYER_HBM_ON 1
-#define DIMLAYER_HBM_OFF 0
+#define TOUCH_DEVICE_PATH "/dev/xiaomi-touch"
+#define TOUCH_SET_CUR_VALUE 0
+#define TOUCH_FOD_ENABLE 10
+#define TOUCH_VALUE_TYPE_SIZE 6
 
-#define FOD_UI_PATH "/sys/devices/platform/soc/soc:qcom,dsi-display-primary/fod_ui"
+#define FOD_DIMLAYER_PATH "/sys/class/drm/card0-DSI-1/dim_layer_enable"
+
+#define FOD_UI_PATH "/sys/class/drm/card0-DSI-1/fod_ui_ready"
 
 namespace {
 
 template <typename T>
 static void set(const std::string& path, const T& value) {
     std::ofstream file(path);
-    file << value;
+    file << value << std::flush;
+    if (!file) ALOGE("Failed to write %s", path.c_str());
 }
 
-static bool readBool(int fd) {
+static void setFodStatus(int value) {
+    android::base::unique_fd fd(open(TOUCH_DEVICE_PATH, O_RDWR | O_CLOEXEC));
+    if (fd.get() < 0) {
+        ALOGE("Failed to open Xiaomi touch device: %s", strerror(errno));
+        return;
+    }
+
+    // Xiaomi's SET_CUR_VALUE ioctl returns the driver result in the first word.
+    int args[TOUCH_VALUE_TYPE_SIZE] = {TOUCH_FOD_ENABLE, value};
+    int rc = ioctl(fd.get(), TOUCH_SET_CUR_VALUE, args);
+    if (rc != 0 || args[0] < 0) {
+        ALOGE("Failed to set FOD touch status: ioctl=%d, driver=%d", rc, args[0]);
+    }
+}
+
+static bool readHbmReady(int fd) {
     char c;
     int rc;
 
@@ -68,7 +91,8 @@ static bool readBool(int fd) {
         return false;
     }
 
-    return c != '0';
+    // The driver reports HBM in bit 0 and the fingerprint icon in bit 1.
+    return c == '1' || c == '3';
 }
 
 } // anonymous namespace
@@ -90,49 +114,75 @@ BiometricsFingerprint* BiometricsFingerprint::sInstance = nullptr;
 BiometricsFingerprint::BiometricsFingerprint() : mClientCallback(nullptr), mDevice(nullptr) {
     sInstance = this; // keep track of the most recent instance
     mDevice = openHal();
-    if (!mDevice) {
-        ALOGE("Can't open HAL module");
-    }
+    LOG_ALWAYS_FATAL_IF(mDevice == nullptr, "Can't open fingerprint HAL module");
 
-    std::thread([this]() {
-        int fd = open(FOD_UI_PATH, O_RDONLY);
-        if (fd < 0) {
-            ALOGE("failed to open fd, err: %d", fd);
+    // The compositor toggles HBM; this gate must stay enabled for the off commit too.
+    set(FOD_DIMLAYER_PATH, 1);
+
+    mStopFd.reset(eventfd(0, EFD_CLOEXEC));
+    LOG_ALWAYS_FATAL_IF(mStopFd.get() < 0, "Can't create fingerprint stop event: %s",
+                        strerror(errno));
+
+    mFodThread = std::thread([this]() {
+        android::base::unique_fd fd(open(FOD_UI_PATH, O_RDONLY | O_CLOEXEC));
+        if (fd.get() < 0) {
+            ALOGE("failed to open FOD UI: %s", strerror(errno));
             return;
         }
 
-        struct pollfd fodUiPoll = {
-            .fd = fd,
-            .events = POLLERR | POLLPRI,
-            .revents = 0,
+        struct pollfd fodUiPoll[] = {
+            {fd.get(), POLLERR | POLLPRI, 0},
+            {mStopFd.get(), POLLIN, 0},
         };
 
         while (true) {
-            int rc = poll(&fodUiPoll, 1, -1);
+            int rc = TEMP_FAILURE_RETRY(poll(fodUiPoll, 2, -1));
             if (rc < 0) {
-                ALOGE("failed to poll fd, err: %d", rc);
-                continue;
+                ALOGE("failed to poll FOD UI: %s", strerror(errno));
+                return;
             }
+            if (fodUiPoll[1].revents) return;
+            if (fodUiPoll[0].revents & (POLLHUP | POLLNVAL)) return;
+            if (!(fodUiPoll[0].revents & (POLLERR | POLLPRI))) continue;
 
-            mDevice->extCmd(mDevice, COMMAND_NIT, readBool(fd) ? PARAM_NIT_FOD : PARAM_NIT_NONE);
-
-            set(FOD_STATUS_PATH, readBool(fd) ? FOD_STATUS_ON : FOD_STATUS_OFF);
+            const bool fodUi = readHbmReady(fd.get());
+            mDevice->extCmd(mDevice, COMMAND_NIT, fodUi ? PARAM_NIT_FOD : PARAM_NIT_NONE);
         }
-    }).detach();
+    });
 }
 
 BiometricsFingerprint::~BiometricsFingerprint() {
     ALOGV("~BiometricsFingerprint()");
+    // The worker must stop before closing the HAL it calls.
+    if (mFodThread.joinable()) {
+        const uint64_t stop = 1;
+        LOG_ALWAYS_FATAL_IF(TEMP_FAILURE_RETRY(write(mStopFd.get(), &stop, sizeof(stop))) !=
+                                static_cast<ssize_t>(sizeof(stop)),
+                            "Can't stop fingerprint FOD worker: %s", strerror(errno));
+        mFodThread.join();
+    }
+    setFodMode(FOD_STATUS_OFF);
     if (mDevice == nullptr) {
-        ALOGE("No valid device");
+        sInstance = nullptr;
         return;
     }
     int err;
     if (0 != (err = mDevice->common.close(reinterpret_cast<hw_device_t*>(mDevice)))) {
         ALOGE("Can't close fingerprint module, error: %d", err);
-        return;
     }
     mDevice = nullptr;
+    sInstance = nullptr;
+}
+
+void BiometricsFingerprint::setFodMode(int mode) {
+    std::lock_guard<std::mutex> lock(mFodMutex);
+    mFodMode = mode;
+    setFodStatus(mode);
+}
+
+void BiometricsFingerprint::updateFodTouch(bool enabled) {
+    std::lock_guard<std::mutex> lock(mFodMutex);
+    setFodStatus(enabled ? mFodMode : FOD_STATUS_OFF);
 }
 
 Return<RequestStatus> BiometricsFingerprint::ErrorFilter(int32_t error) {
@@ -244,10 +294,14 @@ Return<uint64_t> BiometricsFingerprint::preEnroll() {
 Return<RequestStatus> BiometricsFingerprint::enroll(const hidl_array<uint8_t, 69>& hat,
                                                     uint32_t gid, uint32_t timeoutSec) {
     const hw_auth_token_t* authToken = reinterpret_cast<const hw_auth_token_t*>(hat.data());
-    return ErrorFilter(mDevice->enroll(mDevice, authToken, gid, timeoutSec));
+    setFodMode(FOD_STATUS_ENROLL);
+    const int error = mDevice->enroll(mDevice, authToken, gid, timeoutSec);
+    if (error) setFodMode(FOD_STATUS_OFF);
+    return ErrorFilter(error);
 }
 
 Return<RequestStatus> BiometricsFingerprint::postEnroll() {
+    setFodMode(FOD_STATUS_OFF);
     return ErrorFilter(mDevice->post_enroll(mDevice));
 }
 
@@ -256,8 +310,7 @@ Return<uint64_t> BiometricsFingerprint::getAuthenticatorId() {
 }
 
 Return<RequestStatus> BiometricsFingerprint::cancel() {
-    set(FOD_STATUS_PATH, FOD_STATUS_OFF);
-    set(DIMLAYER_HBM_PATH, DIMLAYER_HBM_OFF);
+    setFodMode(FOD_STATUS_OFF);
     return ErrorFilter(mDevice->cancel(mDevice));
 }
 
@@ -289,14 +342,10 @@ Return<RequestStatus> BiometricsFingerprint::setActiveGroup(uint32_t gid,
 }
 
 Return<RequestStatus> BiometricsFingerprint::authenticate(uint64_t operationId, uint32_t gid) {
-    return ErrorFilter(mDevice->authenticate(mDevice, operationId, gid));
-}
-
-IBiometricsFingerprint* BiometricsFingerprint::getInstance() {
-    if (!sInstance) {
-        sInstance = new BiometricsFingerprint();
-    }
-    return sInstance;
+    setFodMode(FOD_STATUS_AUTHENTICATE);
+    const int error = mDevice->authenticate(mDevice, operationId, gid);
+    if (error) setFodMode(FOD_STATUS_OFF);
+    return ErrorFilter(error);
 }
 
 void setFpVendorProp(const char* fp_vendor) {
@@ -320,7 +369,7 @@ fingerprint_device_t* getDeviceForVendor(const char* class_name) {
 
     fingerprint_module_t const* fp_module = reinterpret_cast<const fingerprint_module_t*>(hw_module);
 
-    if (fp_module->common.methods->open == nullptr) {
+    if (fp_module->common.methods == nullptr || fp_module->common.methods->open == nullptr) {
         ALOGE("No valid open method: class %s", class_name);
         return nullptr;
     }
@@ -333,12 +382,29 @@ fingerprint_device_t* getDeviceForVendor(const char* class_name) {
         return nullptr;
     }
 
+    if (device == nullptr || device->close == nullptr) {
+        ALOGE("No valid fingerprint device: class %s", class_name);
+        return nullptr;
+    }
+
     if (kVersion != device->version) {
         ALOGE("Wrong fingerprint version: expected %d, got %d", kVersion, device->version);
+        device->close(device);
         return nullptr;
     }
 
     fingerprint_device_t* fp_device = reinterpret_cast<fingerprint_device_t*>(device);
+
+    if (fp_device->set_notify == nullptr || fp_device->pre_enroll == nullptr ||
+        fp_device->enroll == nullptr || fp_device->post_enroll == nullptr ||
+        fp_device->get_authenticator_id == nullptr || fp_device->cancel == nullptr ||
+        fp_device->enumerate == nullptr || fp_device->remove == nullptr ||
+        fp_device->set_active_group == nullptr || fp_device->authenticate == nullptr ||
+        fp_device->extCmd == nullptr) {
+        ALOGE("Missing required fingerprint methods: class %s", class_name);
+        device->close(device);
+        return nullptr;
+    }
 
     ALOGI("Loaded fingerprint module: class %s", class_name);
     return fp_device;
@@ -371,6 +437,7 @@ fingerprint_device_t* BiometricsFingerprint::openHal() {
 
     if (0 != (err = fp_device->set_notify(fp_device, BiometricsFingerprint::notify))) {
         ALOGE("Can't register fingerprint module callback, error: %d", err);
+        fp_device->common.close(reinterpret_cast<hw_device_t*>(fp_device));
         return nullptr;
     }
 
@@ -378,16 +445,20 @@ fingerprint_device_t* BiometricsFingerprint::openHal() {
 }
 
 void BiometricsFingerprint::notify(const fingerprint_msg_t* msg) {
-    BiometricsFingerprint* thisPtr =
-        static_cast<BiometricsFingerprint*>(BiometricsFingerprint::getInstance());
+    BiometricsFingerprint* thisPtr = sInstance;
+    if (thisPtr == nullptr || msg == nullptr) {
+        ALOGE("Receiving fingerprint callback without an active instance or message.");
+        return;
+    }
     std::lock_guard<std::mutex> lock(thisPtr->mClientCallbackMutex);
-    if (thisPtr == nullptr || thisPtr->mClientCallback == nullptr) {
+    if (thisPtr->mClientCallback == nullptr) {
         ALOGE("Receiving callbacks before the client callback is registered.");
         return;
     }
     const uint64_t devId = reinterpret_cast<uint64_t>(thisPtr->mDevice);
     switch (msg->type) {
         case FINGERPRINT_ERROR: {
+            thisPtr->setFodMode(FOD_STATUS_OFF);
             int32_t vendorCode = 0;
             FingerprintError result = VendorErrorFilter(msg->data.error, &vendorCode);
             ALOGD("onError(%d)", result);
@@ -403,16 +474,20 @@ void BiometricsFingerprint::notify(const fingerprint_msg_t* msg) {
             // vendorCode 21 means waiting for fingerprint
             // result 0 means fingerprint detected successfully
             if (vendorCode == 21 || vendorCode == 22 || vendorCode == 23) {
-                set(FOD_STATUS_PATH, FOD_STATUS_ON);
+                thisPtr->updateFodTouch(true);
             } else if (static_cast<int32_t>(result) == 0 || static_cast<int32_t>(result) == 3 || vendorCode == 44 || vendorCode == 25) {
-                set(DIMLAYER_HBM_PATH, DIMLAYER_HBM_OFF);
-                set(FOD_STATUS_PATH, FOD_STATUS_OFF);
+                thisPtr->updateFodTouch(false);
             }
             if (!thisPtr->mClientCallback->onAcquired(devId, result, vendorCode).isOk()) {
                 ALOGE("failed to invoke fingerprint onAcquired callback");
             }
         } break;
         case FINGERPRINT_TEMPLATE_ENROLLING:
+            if (msg->data.enroll.samples_remaining == 0) {
+                thisPtr->setFodMode(FOD_STATUS_OFF);
+            } else {
+                thisPtr->updateFodTouch(true);
+            }
             ALOGD("onEnrollResult(fid=%d, gid=%d, rem=%d)", msg->data.enroll.finger.fid,
                   msg->data.enroll.finger.gid, msg->data.enroll.samples_remaining);
             if (!thisPtr->mClientCallback
@@ -435,6 +510,7 @@ void BiometricsFingerprint::notify(const fingerprint_msg_t* msg) {
             break;
         case FINGERPRINT_AUTHENTICATED:
             if (msg->data.authenticated.finger.fid != 0) {
+                thisPtr->setFodMode(FOD_STATUS_OFF);
                 ALOGD("onAuthenticated(fid=%d, gid=%d)", msg->data.authenticated.finger.fid,
                       msg->data.authenticated.finger.gid);
                 const uint8_t* hat = reinterpret_cast<const uint8_t*>(&msg->data.authenticated.hat);
@@ -448,6 +524,7 @@ void BiometricsFingerprint::notify(const fingerprint_msg_t* msg) {
                 }
             } else {
                 // Not a recognized fingerprint
+                thisPtr->updateFodTouch(true);
                 if (!thisPtr->mClientCallback
                          ->onAuthenticated(devId, msg->data.authenticated.finger.fid,
                                            msg->data.authenticated.finger.gid, hidl_vec<uint8_t>())
@@ -478,14 +555,13 @@ Return<bool> BiometricsFingerprint::isUdfps(uint32_t /* sensorId */) {
     return true;
 }
 
+// UdfpsExtension's pressed layer synchronizes HBM with the DRM atomic commit.
 Return<void> BiometricsFingerprint::onFingerDown(uint32_t /* x */, uint32_t /* y */,
                                                 float /* minor */, float /* major */) {
-    set(DIMLAYER_HBM_PATH, DIMLAYER_HBM_ON);
     return Void();
 }
 
 Return<void> BiometricsFingerprint::onFingerUp() {
-    set(DIMLAYER_HBM_PATH, DIMLAYER_HBM_OFF);
     return Void();
 }
 

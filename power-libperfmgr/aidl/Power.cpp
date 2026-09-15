@@ -33,7 +33,7 @@
 #include "PowerHintSession.h"
 #include "PowerSessionManager.h"
 
-#define TARGET_TAP_TO_WAKE_NODE "/proc/touchpanel/wake_gesture"
+#define TARGET_TAP_TO_WAKE_NODE "/sys/devices/virtual/touch/tp_dev/double_tap"
 
 namespace aidl {
 namespace google {
@@ -91,15 +91,21 @@ ndk::ScopedAStatus Power::setMode(Mode type, bool enabled) {
     PowerSessionManager::getInstance()->updateHintMode(toString(type), enabled);
     switch (type) {
         case Mode::DOUBLE_TAP_TO_WAKE:
-            ::android::base::WriteStringToFile(enabled ? "1" : "0", TARGET_TAP_TO_WAKE_NODE, true);
+            if (!::android::base::WriteStringToFile(enabled ? "1" : "0",
+                                                   TARGET_TAP_TO_WAKE_NODE, true)) {
+                PLOG(ERROR) << "Failed to update double tap to wake";
+                return ndk::ScopedAStatus::fromExceptionCode(EX_ILLEGAL_STATE);
+            }
             break;
         case Mode::LOW_POWER:
             break;
         case Mode::SUSTAINED_PERFORMANCE:
             if (enabled) {
                 mHintManager->DoHint("SUSTAINED_PERFORMANCE");
+            } else {
+                mHintManager->EndHint("SUSTAINED_PERFORMANCE");
             }
-            mSustainedPerfModeOn = true;
+            mSustainedPerfModeOn = enabled;
             break;
         case Mode::LAUNCH:
             if (mSustainedPerfModeOn) {

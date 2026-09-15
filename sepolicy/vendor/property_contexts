@@ -36,6 +36,8 @@ persist.sensor.                         u:object_r:persist_sensors_prop:s0
 
 #Thermal
 vendor.thermal.                         u:object_r:vendor_thermal_prop:s0
+persist.vendor.enable.thermal.genl      u:object_r:vendor_thermal_prop:s0 exact bool
+vendor.disable.thermal.control          u:object_r:vendor_thermal_prop:s0 exact bool
 
 # Xiaomi thermal daemon
 vendor.sys.thermal.                     u:object_r:thermal_normal_prop:s0

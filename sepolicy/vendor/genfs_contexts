@@ -1,11 +1,12 @@
 # Doze
-genfscon sysfs /devices/platform/soc/soc:qcom,dsi-display-primary/doze_mode                                                                                         u:object_r:vendor_sysfs_graphics:s0
-
-# FlickerFree
-genfscon sysfs /devices/platform/soc/soc:qcom,dsi-display-primary/dimlayer_bl                                                                                       u:object_r:vendor_sysfs_graphics:s0
+genfscon sysfs /devices/platform/soc/ae00000.qcom,mdss_mdp/drm/card0/card0-DSI-1/doze_backlight                                                                                         u:object_r:vendor_sysfs_graphics:s0
 
 # HBM
 genfscon sysfs /devices/platform/soc/soc:qcom,dsi-display-primary/hbm                                                                                               u:object_r:vendor_sysfs_graphics:s0
+
+# FOD
+genfscon sysfs /devices/platform/soc/ae00000.qcom,mdss_mdp/drm/card0/card0-DSI-1/dim_layer_enable                                                                   u:object_r:sysfs_fod:s0
+genfscon sysfs /devices/platform/soc/ae00000.qcom,mdss_mdp/drm/card0/card0-DSI-1/fod_ui_ready                                                                      u:object_r:sysfs_fod:s0
 
 # Insmod
 genfscon sysfs /kernel/boot_cdsp/boot                                                                                                                               u:object_r:sysfs_msm_boot:s0
@@ -53,3 +54,6 @@ genfscon sysfs /devices/virtual/diag/diag/wakeup                                
 # Wireless charger
 genfscon sysfs /devices/platform/soc/c440000.qcom,spmi/spmi-0/spmi0-02/c440000.qcom,spmi:qcom,pm8150b@2:qcom,qpnp-smb5/power_supply/wireless                        u:object_r:vendor_sysfs_battery_supply:s0
 genfscon sysfs /devices/platform/soc/890000.i2c/i2c-0/0-003b/power_supply/idt                                                                                       u:object_r:vendor_sysfs_battery_supply:s0
+
+# Double tap to wake
+genfscon sysfs /devices/virtual/touch/tp_dev/double_tap u:object_r:sysfs_touchpanel:s0

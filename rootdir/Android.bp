@@ -1,0 +1,11 @@
+sh_binary {
+    name: "init.affinity.sh",
+    src: "bin/init.affinity.sh",
+    vendor: true,
+}
+
+sh_binary {
+    name: "init.insmod.sh",
+    src: "bin/init.insmod.sh",
+    vendor: true,
+}

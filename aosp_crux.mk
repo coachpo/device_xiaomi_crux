@@ -38,5 +38,4 @@ PRODUCT_MANUFACTURER := Xiaomi
 # Recovery
 TARGET_USES_AOSP_RECOVERY := true
 
-# Include firmware
-$(call inherit-product, vendor/xiaomi-firmware/crux/firmware.mk)
+# Keep the installed stock firmware. ROM OTAs only update Android images.

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <remote name="crux-github" fetch="https://github.com/" />
+    <remote name="crux-gitlab" fetch="https://gitlab.com/" />
+
+    <project name="coachpo/device_xiaomi_crux" path="device/xiaomi/crux"
+             remote="crux-github" revision="thirteen-plus" />
+    <project name="coachpo/vendor_xiaomi_crux" path="vendor/xiaomi/crux"
+             remote="crux-github" revision="thirteen-plus" />
+    <project name="coachpo/kernel_xiaomi_crux" path="kernel/xiaomi/crux"
+             remote="crux-github" revision="thirteen-plus" />
+    <project name="PixelExperience/hardware_xiaomi" path="hardware/xiaomi"
+             remote="crux-github" revision="9352b3ac9ce5d5f4c2adca0225a00ddeef9ef9cd" />
+    <project name="jjpprrrr/prelude-clang" path="prebuilts/clang/host/linux-x86/clang-prelude"
+             remote="crux-gitlab" revision="ac8fce34dc0f6918672100d7a6e867a66b8afa8f"
+             clone-depth="1" />
+</manifest>

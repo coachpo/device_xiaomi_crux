@@ -54,7 +54,7 @@ public final class DozeUtils {
     protected static final String GESTURE_RAISE_TO_WAKE = "gesture_raise_to_wake";
 
     protected static final String DOZE_MODE_PATH =
-            "/sys/devices/platform/soc/soc:qcom,dsi-display-primary/doze_mode";
+            "/sys/class/drm/card0-DSI-1/doze_backlight";
     protected static final String DOZE_MODE_HBM = "1";
     protected static final String DOZE_MODE_LBM = "0";
 
@@ -140,7 +140,16 @@ public final class DozeUtils {
     }
 
     protected static boolean setDozeMode(String value) {
-        return FileUtils.writeLine(DOZE_MODE_PATH, value);
+        // The preference uses 0 for low, while the DRM doze backlight enum uses 2.
+        // Auto brightness is handled by AodSensor and must not be sent to DRM.
+        switch (value) {
+            case DOZE_BRIGHTNESS_LBM:
+                return FileUtils.writeLine(DOZE_MODE_PATH, "2");
+            case DOZE_BRIGHTNESS_HBM:
+                return FileUtils.writeLine(DOZE_MODE_PATH, "1");
+            default:
+                return false;
+        }
     }
 
     protected static boolean isDozeAutoBrightnessEnabled(Context context) {
