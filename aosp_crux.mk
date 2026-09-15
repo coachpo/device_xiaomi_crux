@@ -38,4 +38,8 @@ PRODUCT_MANUFACTURER := Xiaomi
 # Recovery
 TARGET_USES_AOSP_RECOVERY := true
 
+# Crux has multiple storage capacities. Recovery formats the actual userdata
+# partition; a ROM OTA must not carry a fixed-size donor userdata image.
+PRODUCT_BUILD_USERDATA_IMAGE := false
+
 # Keep the installed stock firmware. ROM OTAs only update Android images.

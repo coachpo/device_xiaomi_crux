@@ -150,6 +150,13 @@ service vendor.per_proxy /vendor/bin/pm-proxy
     group system
     disabled
 
+# Crux always has an external SDX50 modem. Start after the firmware mounts are
+# available; mdm_helper serves ESOC requests using the retained modem firmware.
+service vendor.mdm_helper /vendor/bin/mdm_helper
+    class main
+    user root
+    group system wakelock
+
 on property:init.svc.vendor.per_mgr=running
     start vendor.per_proxy
 

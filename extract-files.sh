@@ -71,6 +71,21 @@ function blob_fixup() {
     vendor/lib64/camera/components/com.qti.node.watermark.so)
         add_needed "libpiex_shim.so" "${2}"
         ;;
+    vendor/etc/init/android.hardware.drm@1.3-service.widevine.rc)
+        # Crux launched on Pie. The Oreo-to-Pie Widevine data migration service
+        # has no provider or supported source data on this device.
+        python3 - "${2}" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+text = re.sub(r"^    start vendor\.move_data_sh\n", "", text, flags=re.M)
+text = re.sub(r"^service vendor\.move_data_sh .*\n(?:[ \t].*\n|\n)*", "", text, flags=re.M)
+path.write_text(text)
+PY
+        ;;
     esac
 }
 
@@ -88,5 +103,9 @@ setup_vendor "${DEVICE}" "${VENDOR}" "${ANDROID_ROOT}" false "${CLEAN_VENDOR}"
 
 extract "${MY_DIR}/proprietary-files.txt" "${SRC}" \
         "${KANG}" --section "${SECTION}"
+
+# extract-utils can report missing inputs and still return success. Do not
+# publish regenerated build files until the complete retained set is valid.
+python3 "${MY_DIR}/update-sha1sums.py" --check
 
 "${MY_DIR}/setup-makefiles.sh"

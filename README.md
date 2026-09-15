@@ -1,8 +1,14 @@
 # Xiaomi Mi 9 Pro 5G (crux)
 
-Device configuration for PixelExperience Plus, Android 13. Use the matching
-`thirteen-plus` device, vendor and kernel trees. `cepheus` is a different target;
-the historical `thirteen-plus-dev` device branch is not the Crux build baseline.
+Crux device configuration ported from the PixelExperience **Cepheus** reference
+for PixelExperience Plus, Android 13. Shared SM8150 code and compatible donor
+blobs are retained intentionally; product identity, hardware-specific inputs and
+kernel interfaces target **Crux**. `thirteen-plus` is the only working branch in
+all three repositories.
+
+This is a source bring-up baseline without a completed ROM build or hardware
+qualification. See [PORTING.md](PORTING.md) for the source contracts, references
+and the checks to run when a build host and device become available.
 
 ## Source layout
 
@@ -19,6 +25,8 @@ recovery, and non-A/B static system/vendor partitions. The kernel builds
 `Image-dtb` and the Crux DTBO from `crux_defconfig`. First-stage mounts are
 specified by `rootdir/etc/fstab.qcom`; the legacy DT fstab is disabled by the
 Crux overlay.
+No fixed-size userdata image is generated: Crux has multiple storage capacities,
+and recovery formats the actual partition on the device.
 
 ## Dependencies and build
 
@@ -72,6 +80,8 @@ packages; incremental hooks use the target archive, not the old source images.
 
 `proprietary-files.txt` is the authoritative extraction list. See the companion
 vendor tree's `PROVENANCE.md` for the recorded sources and the restored XML files.
+Crux-specific sensor registry inputs and the external-modem loading helpers are
+recorded separately from the retained Android 13 compatibility donors.
 Use the pinned PE extract-utils version documented there when regenerating vendor
 makefiles; the generated files should not need manual edits.
 
@@ -90,6 +100,8 @@ compiled HAL/driver test harnesses:
 ```sh
 python3 -B -m unittest discover -s device/xiaomi/crux/tests -v
 python3 -B kernel/xiaomi/crux/tools/testing/selftests/drivers/gpu/crux_fod_test.py
+python3 -B kernel/xiaomi/crux/tools/testing/selftests/kconfig/crux_config_test.py
+python3 -B kernel/xiaomi/crux/tools/testing/selftests/cpufreq/crux_input_boost_test.py
 ```
 
 These checks cover local contracts and failure paths. Before distributing a ROM,
@@ -99,9 +111,6 @@ fingerprint illumination, touch gestures, temperature reporting, radio and
 display behavior require device testing. Keep logcat, tombstones and pstore logs
 with the source and build records.
 
-One external dependency remains to be checked in the complete platform:
-the inherited Widevine init file starts `/system/bin/move_widevine_data.sh`.
-These three repositories do not supply it, and the canonical PE GMS repository
-was unavailable during this repair. Confirm the helper exists and is correctly
-packaged in the final system image before enabling that migration service in a
-release. Its migration behavior has been retained until its provider is known.
+The inherited Oreo-to-Pie Widevine data migration hook is removed for this
+Pie-launched target. The Widevine HAL and its vendor data directory remain
+packaged; the extraction fixup reproduces that init change.

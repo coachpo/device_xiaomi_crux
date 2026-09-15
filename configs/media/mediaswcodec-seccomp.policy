@@ -1,0 +1,9 @@
+# Additional syscalls for the arm64 software codec service.
+pselect6: 1
+eventfd2: 1
+sendto: 1
+recvfrom: 1
+lseek: 1
+sysinfo: 1
+getcwd: 1
+getdents64: 1

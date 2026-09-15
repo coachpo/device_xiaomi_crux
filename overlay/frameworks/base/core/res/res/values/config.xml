@@ -894,6 +894,10 @@
         <item>GPS_LOCK=0</item>
     </string-array>
 
+    <!-- The Snapdragon X50 in Crux supports 5G NSA only. -->
+    <bool name="config_telephony5gNonStandalone">true</bool>
+    <bool name="config_telephony5gStandalone">false</bool>
+
     <!-- Flag specifying whether VoLTE is available on device -->
     <bool name="config_device_volte_available">true</bool>
 

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import hashlib
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -74,6 +75,7 @@ class BlobToolsTest(unittest.TestCase):
         self.assertIn("Unlisted blob", result.stderr)
 
     def extraction_fixture(self, failure=False):
+        (self.device / "proprietary-files.txt").write_text("")
         helper = self.root / "tools/extract-utils/extract_utils.sh"
         helper.parent.mkdir(parents=True)
         helper.write_text('''setup_vendor() {
@@ -86,7 +88,7 @@ extract() {
     blob_fixup vendor/lib64/camera/components/com.qti.node.watermark.so "$ANDROID_ROOT/blob"
     touch "$ANDROID_ROOT/extraction-complete"
 }
-write_headers() { :; }
+write_headers() { touch "$ANDROID_ROOT/build-files-generated"; }
 write_makefiles() { :; }
 write_footers() { :; }
 ''')
@@ -129,6 +131,51 @@ esac
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("requires a section name", result.stderr)
         self.assertFalse((self.root / "extraction-complete").exists())
+
+    def test_missing_input_blocks_build_file_generation(self):
+        self.extraction_fixture()
+        (self.device / "proprietary-files.txt").write_text("vendor/bin/missing-daemon\n")
+        result = self.run_extraction("unused-source")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Missing blob", result.stderr)
+        self.assertFalse((self.root / "build-files-generated").exists())
+
+    def test_widevine_fixup_preserves_hal_and_is_idempotent(self):
+        self.extraction_fixture()
+        helper = self.root / "tools/extract-utils/extract_utils.sh"
+        with helper.open("a") as stream:
+            stream.write('''
+extract() {
+    blob_fixup vendor/etc/init/android.hardware.drm@1.3-service.widevine.rc "$ANDROID_ROOT/widevine.rc"
+    blob_fixup vendor/etc/init/android.hardware.drm@1.3-service.widevine.rc "$ANDROID_ROOT/widevine.rc"
+}
+''')
+        rc = self.root / "widevine.rc"
+        hal = "service vendor.drm-widevine-hal-1-3 /vendor/bin/hw/android.hardware.drm@1.3-service.widevine\n    class hal\n"
+        action = "on property:init.svc.mediadrm=running\n    mkdir /data/vendor/mediadrm 0770 media mediadrm\n"
+        rc.write_text(action + "    start vendor.move_data_sh\n\n"
+                      "service vendor.move_data_sh /system/bin/move_widevine_data.sh\n"
+                      "    class late_start\n    user media\n    disabled\n    oneshot\n\n" + hal)
+        result = self.run_extraction("unused-source")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(rc.read_text(), action + "\n" + hal)
+
+    def test_crux_sensor_filters_and_light_wiring(self):
+        blobs = DEVICE_DIR.parents[2] / "vendor/xiaomi/crux/proprietary"
+        if not blobs.is_dir():
+            self.skipTest("Requires the companion vendor checkout")
+        configs = blobs / "vendor/etc/sensors/config"
+        for path in configs.glob("*.json"):
+            config = json.loads(path.read_text())
+            platforms = config["config"]["hw_platform"]
+            # SHTW2 is a separate inherited optional sensor with no Crux stock
+            # source. Its filters must remain disabled on this board.
+            if path.name in ("shtw2_0.json", "sm8150_shtw2_0.json"):
+                self.assertNotIn("CRUX", platforms, path.name)
+            elif "CEPHEUS" in platforms:
+                self.assertIn("CRUX", platforms, path.name)
+        light = json.loads((configs / "sm8150_tcs3701.json").read_text())
+        self.assertEqual(light["tcs3701_platform"][".config"]["dri_irq_num"]["data"], "119")
 
 
 if __name__ == "__main__":

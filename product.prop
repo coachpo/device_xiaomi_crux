@@ -63,7 +63,7 @@ ro.netflix.bsp_rev=Q855-16947-1
 ro.nfc.port=I2C
 
 # Product
-ro.product.mod_device=crux_eea_global
+ro.product.mod_device=crux
 
 # Radio
 DEVICE_PROVISIONED=1
@@ -76,7 +76,8 @@ persist.sys.fflag.override.settings_provider_model=false
 persist.vendor.radio.enable_temp_dds=true
 ril.subscription.types=RUIM
 ro.telephony.default_cdma_sub=0
-ro.telephony.default_network=22,22
+# NR/LTE/TDSCDMA/CDMA/EVDO/GSM/WCDMA; either SIM can be the primary data SIM.
+ro.telephony.default_network=33,33
 telephony.lteOnCdmaDevice=1
 
 # RCS

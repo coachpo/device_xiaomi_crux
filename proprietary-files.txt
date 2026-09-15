@@ -432,7 +432,7 @@ vendor/lib64/libssd.so
 
 # DRM - Widevine
 vendor/bin/hw/android.hardware.drm@1.3-service.widevine
-vendor/etc/init/android.hardware.drm@1.3-service.widevine.rc
+vendor/etc/init/android.hardware.drm@1.3-service.widevine.rc|c35e1a6f9a6faff19064a81e07c4be82ceaf4bb5|6b00f42dc85becc58f303bc4588331239c5c83aa
 -vendor/etc/vintf/manifest/manifest_android.hardware.drm@1.3-service.widevine.xml
 vendor/lib64/libwvhidl.so
 vendor/lib64/mediadrm/libwvdrmengine.so
@@ -771,6 +771,11 @@ system_ext/framework/qcrilhook.jar|8d44048c04f4d38a6bf6a279e3bceface10c0dde
 system_ext/framework/qti-telephony-common.jar|a4cc2c9423cae6e0f550db28c0539a53ca8eb866
 -system_ext/priv-app/qcrilmsgtunnel/qcrilmsgtunnel.apk|3ed05e8d9078c817ad3c93780f1541fc27bd552c
 
+# External modem - from Crux V10.4.6.0.PFXCNXM (AndroidBlobs/vendor_xiaomi_crux 92cfc588)
+vendor/bin/mdm_helper|67179e70b4749bfe37576e13d2a081c4d1fb30aa
+vendor/bin/ks|2198e9127990350f4a9205deceb2754b35c6b392
+vendor/lib64/libmdmimgload.so|560cfe3afb59ecf693e48c242efd031f5b291c13
+
 # Radio
 vendor/bin/hw/qcrild
 vendor/bin/adpl
@@ -935,50 +940,52 @@ vendor/lib64/sensors.elliptic.so
 vendor/lib64/sensors.ssc.so
 vendor/lib64/sensors.touch.so
 
-# Sensors config
-vendor/etc/sensors/config/adux1050_0.json
-vendor/etc/sensors/config/ak991x_dri_0.json
-vendor/etc/sensors/config/bmp285_0.json
-vendor/etc/sensors/config/lsm6ds3c_0.json
+# Sensors config - from Crux V10.4.6.0.PFXCNXM (AndroidBlobs/vendor_xiaomi_crux 92cfc588)
+vendor/etc/sensors/config/adux1050_0.json|8cabfcb9bb0ec3c2b0351be2648b0bddfe2feab8
+vendor/etc/sensors/config/ak991x_dri_0.json|3825ee65889c45f7735b91cc9ce96dfe50510042
+vendor/etc/sensors/config/bmp285_0.json|bb39a13148d96678405747695719438fb64813a7
+vendor/etc/sensors/config/lsm6ds3c_0.json|5fa5fe4b3ff9500ef0ba932e42ccac5d68c61c4c
+vendor/etc/sensors/config/sm8150_adux1050_0.json|9c3016c05848e3b1b820504ab556764aa1e25a59
+vendor/etc/sensors/config/sm8150_ak991x_0.json|893c9d57fbcd442a30657c16f44bfaf0d728a843
+vendor/etc/sensors/config/sm8150_bmp285_0.json|50e8e205c9ec709bd61026b41067a4872138654a
+vendor/etc/sensors/config/sm8150_lsm6ds3c_0.json|475ce744778e1268be675c60196b25bc11e7f905
+vendor/etc/sensors/config/sm8150_power_0.json|fb87f5ad1dd4adb25d3c27fca1781c2375ebc7ea
+vendor/etc/sensors/config/sm8150_tcs3701.json|a7e2fdc7685ac009181b9a33300b9be6a13c6f7e
+vendor/etc/sensors/config/sm8150_vl53l1_tof_0.json|7a766750e641d9eb47a393b195642fc900c6172f
+vendor/etc/sensors/config/sns_amd.json|5628aa39ffe6b6f85d92c3bd9cc2be3b99d0b4f7
+vendor/etc/sensors/config/sns_amd_sw_disabled.json|124a468764440223d32ce6717173bc6f5a3e52a8
+vendor/etc/sensors/config/sns_amd_sw_enabled.json|3e17aeeccf888f2c3eb738cb9c9d15e9def8e1ec
+vendor/etc/sensors/config/sns_aod.json|327904c3ae8a54d7b21145eab0e678ff3144a0eb
+vendor/etc/sensors/config/sns_basic_gestures.json|894a34236dd9eb96a1c9ffdd381d1af5000e1995
+vendor/etc/sensors/config/sns_bring_to_ear.json|783e2c3c6523e7f6cab0ecf8a583d4a7cdc392e5
+vendor/etc/sensors/config/sns_ccd.json|8a139d17f204a0e3bf776f66944a5d5753470c4f
+vendor/etc/sensors/config/sns_cm.json|ce95aeba902ae87d5ed209d73d56645835df10e2
+vendor/etc/sensors/config/sns_dae.json|e5d7512bf7e5ea7f35d208ba2edcadaa2cc859b2
+vendor/etc/sensors/config/sns_device_orient.json|23d5557b4253f07036e43939b6d3be05e7808b2a
+vendor/etc/sensors/config/sns_diag_filter.json|b0462b4b3e926188403e01009a4d9b7a07268255
+vendor/etc/sensors/config/sns_distance_bound.json|7ebbc139bbac983d4ea1e10a3e2f060d9e50664e
+vendor/etc/sensors/config/sns_dpc.json|8eafc2b7eac7437609ad330a6b1d94c1515e27c4
+vendor/etc/sensors/config/sns_facing.json|854df0358ce7870cc95dd6c4015015130d28aed3
+vendor/etc/sensors/config/sns_fmv.json|b7bbf9f6b3877ca85f642c936cf7b5013115b9ea
+vendor/etc/sensors/config/sns_geomag_rv.json|436b8c80d4342db614e6c15d29de062f2e8061ce
+vendor/etc/sensors/config/sns_gyro_cal.json|3a267103e623fd8f5fe7ca701f4dcc456d511de0
+vendor/etc/sensors/config/sns_mag_cal.json|56d37bcfd6602a0d9d8dd02d84e1f527b137f227
+vendor/etc/sensors/config/sns_multishake.json|e19491150936d802bc6d434687131250f46fc3e0
+vendor/etc/sensors/config/sns_nonui.json|c9cdf6cb9dfef6fc174cda8623515d194283aa35
+vendor/etc/sensors/config/sns_pedometer.json|035a07dd3378838f34cc0c3c278679bcc10c182d
+vendor/etc/sensors/config/sns_rmd.json|41f2d866cc3b33fb8d9153389d97e8d47d2c19e2
+vendor/etc/sensors/config/sns_rotv.json|7124718111330eb67b9c419070cbf90250fc1b62
+vendor/etc/sensors/config/sns_smd.json|8716961a4920c5672301275c013096c0a63aa25f
+vendor/etc/sensors/config/sns_tilt.json|202a877f7a6503a1c1fbb8672ed697737649ea67
+vendor/etc/sensors/config/sns_tilt_sw_disabled.json|1a0a7815b552465750ef6605d90e69f6b0ff0a38
+vendor/etc/sensors/config/sns_tilt_sw_enabled.json|af524ff321af70fa075092aa61fedafd31666894
+vendor/etc/sensors/config/sns_tilt_to_wake.json|75a701b068dda36918e77dbf21c47a124206222c
+vendor/etc/sensors/config/tcs3701.json|072aabfc201ec9020c522431109e4ff75d1e6617
+vendor/etc/sensors/config/vl53l1_tof_0.json|86d03d3520eb81d67584e3b88016629a71407976
+
+# Sensors config (inherited optional SHTW2 and registry format)
 vendor/etc/sensors/config/shtw2_0.json
-vendor/etc/sensors/config/sm8150_adux1050_0.json
-vendor/etc/sensors/config/sm8150_ak991x_0.json
-vendor/etc/sensors/config/sm8150_bmp285_0.json
-vendor/etc/sensors/config/sm8150_lsm6ds3c_0.json
-vendor/etc/sensors/config/sm8150_power_0.json
 vendor/etc/sensors/config/sm8150_shtw2_0.json
-vendor/etc/sensors/config/sm8150_tcs3701.json
-vendor/etc/sensors/config/sm8150_vl53l1_tof_0.json
-vendor/etc/sensors/config/sns_amd.json
-vendor/etc/sensors/config/sns_amd_sw_disabled.json
-vendor/etc/sensors/config/sns_amd_sw_enabled.json
-vendor/etc/sensors/config/sns_aod.json
-vendor/etc/sensors/config/sns_basic_gestures.json
-vendor/etc/sensors/config/sns_bring_to_ear.json
-vendor/etc/sensors/config/sns_ccd.json
-vendor/etc/sensors/config/sns_cm.json
-vendor/etc/sensors/config/sns_dae.json
-vendor/etc/sensors/config/sns_device_orient.json
-vendor/etc/sensors/config/sns_diag_filter.json
-vendor/etc/sensors/config/sns_distance_bound.json
-vendor/etc/sensors/config/sns_dpc.json
-vendor/etc/sensors/config/sns_facing.json
-vendor/etc/sensors/config/sns_fmv.json
-vendor/etc/sensors/config/sns_geomag_rv.json
-vendor/etc/sensors/config/sns_gyro_cal.json
-vendor/etc/sensors/config/sns_mag_cal.json
-vendor/etc/sensors/config/sns_multishake.json
-vendor/etc/sensors/config/sns_nonui.json
-vendor/etc/sensors/config/sns_pedometer.json
-vendor/etc/sensors/config/sns_rmd.json
-vendor/etc/sensors/config/sns_rotv.json
-vendor/etc/sensors/config/sns_smd.json
-vendor/etc/sensors/config/sns_tilt.json
-vendor/etc/sensors/config/sns_tilt_sw_disabled.json
-vendor/etc/sensors/config/sns_tilt_sw_enabled.json
-vendor/etc/sensors/config/sns_tilt_to_wake.json
-vendor/etc/sensors/config/tcs3701.json
-vendor/etc/sensors/config/vl53l1_tof_0.json
 vendor/etc/sensors/sns_reg_config
 
 # Soter
