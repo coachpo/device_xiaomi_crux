@@ -7,8 +7,8 @@
              remote="crux-github" revision="thirteen-plus" />
     <project name="coachpo/vendor_xiaomi_crux" path="vendor/xiaomi/crux"
              remote="crux-github" revision="thirteen-plus" />
-    <project name="coachpo/kernel_xiaomi_crux" path="kernel/xiaomi/crux"
-             remote="crux-github" revision="thirteen-plus" />
+    <project name="coachpo/kernel_xiaomi_crux" path="kernel/xiaomi/crux-pe-cepheus"
+             remote="crux-github" revision="thirteen" />
     <project name="PixelExperience/hardware_xiaomi" path="hardware/xiaomi"
              remote="crux-github" revision="9352b3ac9ce5d5f4c2adca0225a00ddeef9ef9cd" />
     <project name="jjpprrrr/prelude-clang" path="prebuilts/clang/host/linux-x86/clang-prelude"

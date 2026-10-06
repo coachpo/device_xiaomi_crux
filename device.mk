@@ -196,8 +196,21 @@ PRODUCT_COPY_FILES += \
 
 # Fstab
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.qcom \
-    $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom
+    $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.qcom \
+    $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom \
+    $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.crux_uboot \
+    $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_RAMDISK)/fstab.crux_uboot \
+    $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:recovery/root/fstab.crux_uboot
+
+# The early daemon is platform-linked so diagnostics do not depend on data/APEX.
+ifneq ($(filter aosp_crux:userdebug aosp_crux:eng,$(TARGET_PRODUCT):$(TARGET_BUILD_VARIANT)),)
+PRODUCT_PACKAGES += adbd_crux
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.crux.early_adb=1
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/rootdir/etc/init.crux-development-adb.rc:$(TARGET_COPY_OUT_SYSTEM)/etc/init/init.crux-development-adb.rc
+else
+PRODUCT_VENDOR_PROPERTIES += ro.vendor.crux.early_adb=0
+endif
 
 # Gatekeeper
 PRODUCT_PACKAGES += \

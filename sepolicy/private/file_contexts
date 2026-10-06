@@ -1,0 +1,1 @@
+/system/bin/adbd_crux u:object_r:adbd_exec:s0

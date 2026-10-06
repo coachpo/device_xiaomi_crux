@@ -50,7 +50,8 @@ on charger
     setprop sys.usb.configfs 1
     setprop sys.usb.controller "a600000.dwc3"
 
-on boot
+# Development init has already prepared the same gadget before storage services.
+on boot && property:ro.vendor.crux.early_adb=0
     mkdir /config/usb_gadget/g1 0770
     mkdir /config/usb_gadget/g2 0770
     mkdir /config/usb_gadget/g1/strings/0x409 0770

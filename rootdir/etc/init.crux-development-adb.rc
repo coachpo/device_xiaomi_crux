@@ -1,0 +1,79 @@
+# This daemon is independent of APEX activation and storage encryption.
+service crux_adbd /system/bin/adbd_crux --root_seclabel=u:r:su:s0
+    class core
+    socket adbd seqpacket 660 system system
+    disabled
+    seclabel u:r:adbd:s0
+    onrestart setprop sys.usb.ffs.ready 0
+
+# Property actions are not enabled yet. Initial binding must finish inline,
+# before late-init can wait for Keymaster, APEX activation, or on-device signing.
+on init && property:ro.vendor.crux.early_adb=1 && property:ro.debuggable=1 && property:ro.adb.secure=0
+    mkdir /config/usb_gadget/g1 0770
+    mkdir /config/usb_gadget/g2 0770
+    mkdir /config/usb_gadget/g1/strings/0x409 0770
+    mkdir /config/usb_gadget/g2/strings/0x409 0770
+
+    write /config/usb_gadget/g1/bcdUSB 0x0200
+    write /config/usb_gadget/g2/bcdUSB 0x0200
+    write /config/usb_gadget/g1/os_desc/use 1
+
+    write /config/usb_gadget/g1/strings/0x409/serialnumber ${ro.serialno}
+    write /config/usb_gadget/g2/strings/0x409/serialnumber ${ro.serialno}
+    write /config/usb_gadget/g1/strings/0x409/manufacturer ${ro.product.manufacturer}
+    write /config/usb_gadget/g2/strings/0x409/manufacturer ${ro.product.manufacturer}
+    write /config/usb_gadget/g1/strings/0x409/product ${vendor.usb.product_string}
+    write /config/usb_gadget/g2/strings/0x409/product ${vendor.usb.product_string}
+    mkdir /config/usb_gadget/g1/functions/mass_storage.0
+    mkdir /config/usb_gadget/g1/functions/mtp.gs0
+    mkdir /config/usb_gadget/g1/functions/ptp.gs1
+    mkdir /config/usb_gadget/g1/functions/accessory.gs2
+    mkdir /config/usb_gadget/g1/functions/audio_source.gs3
+    mkdir /config/usb_gadget/g1/functions/midi.gs5
+    mkdir /config/usb_gadget/g1/functions/ffs.adb
+    mkdir /config/usb_gadget/g1/functions/gsi.rmnet
+    mkdir /config/usb_gadget/g1/functions/gsi.rndis
+    mkdir /config/usb_gadget/g1/functions/gsi.dpl
+
+    mkdir /config/usb_gadget/g1/configs/b.1 0770
+    mkdir /config/usb_gadget/g2/configs/b.1 0770
+    mkdir /config/usb_gadget/g1/configs/b.1/strings/0x409 0770
+    mkdir /config/usb_gadget/g2/configs/b.1/strings/0x409 0770
+    write /config/usb_gadget/g1/configs/b.1/MaxPower 900
+    symlink /config/usb_gadget/g1/configs/b.1 /config/usb_gadget/g1/os_desc/b.1
+
+    mkdir /dev/usb-ffs 0770 shell system
+    mkdir /dev/usb-ffs/adb 0770 shell system
+    mount functionfs adb /dev/usb-ffs/adb uid=2000,gid=1000,rmode=0770,fmode=0660
+
+    setprop sys.usb.configfs 1
+    setprop sys.usb.controller "a600000.dwc3"
+    setprop sys.mtp.device_type 3
+    write /sys/class/udc/a600000.dwc3/device/../mode peripheral
+    write /config/usb_gadget/g1/idVendor 0x18d1
+    write /config/usb_gadget/g1/idProduct 0x4ee7
+    write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration adb
+    setprop sys.usb.ffs.ready 0
+    # Avoid a daemon restart just to read privileged diagnostic files.
+    # ro.secure remains 1; the standard debuggable adb-root exception applies.
+    setprop service.adb.root 1
+    start crux_adbd
+    wait_for_prop sys.usb.ffs.ready 1
+    symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
+    write /config/usb_gadget/g1/UDC a600000.dwc3
+
+# Subsequent early-daemon restarts can rebind once init property actions run.
+on property:sys.usb.ffs.ready=1 && property:init.svc.crux_adbd=running && property:ro.vendor.crux.early_adb=1
+    write /config/usb_gadget/g1/UDC none
+    write /config/usb_gadget/g1/UDC a600000.dwc3
+
+# Reaping the old service removes its adbd socket. Wait before the standard
+# property-controlled APEX service is allowed to create a replacement socket.
+on early-boot && property:ro.vendor.crux.early_adb=1 && property:ro.debuggable=1 && property:ro.adb.secure=0
+    write /config/usb_gadget/g1/UDC none
+    stop crux_adbd
+    wait_for_prop init.svc.crux_adbd stopped
+    setprop sys.usb.ffs.ready 0
+    rm /config/usb_gadget/g1/configs/b.1/f1
+    setprop service.adb.root ""
+    setprop persist.sys.usb.config adb

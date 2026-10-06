@@ -7,9 +7,9 @@
  },
  {
    "repository" : "coachpo/kernel_xiaomi_crux",
-   "target_path": "kernel/xiaomi/crux",
+   "target_path": "kernel/xiaomi/crux-pe-cepheus",
    "remote"     : "github",
-   "branch"     : "thirteen-plus"
+   "branch"     : "thirteen"
  },
  {
    "repository" : "PixelExperience/hardware_xiaomi",

@@ -91,7 +91,7 @@ DEVICE_MATRIX_FILE := $(DEVICE_PATH)/configs/hidl/compatibility_matrix.xml
 
 # Init
 TARGET_INIT_VENDOR_LIB := //$(DEVICE_PATH):libinit_crux
-TARGET_RECOVERY_DEVICE_MODULES := libinit_crux
+TARGET_RECOVERY_DEVICE_MODULES := libinit_crux e2fsck.recovery
 
 # Kernel
 BOARD_KERNEL_BASE := 0x00000000
@@ -105,10 +105,11 @@ BOARD_RAMDISK_OFFSET := 0x01000000
 
 TARGET_KERNEL_CLANG_COMPILE := true
 TARGET_KERNEL_CONFIG := crux_defconfig
-TARGET_KERNEL_SOURCE := kernel/xiaomi/crux
+TARGET_KERNEL_SOURCE := kernel/xiaomi/crux-pe-cepheus
 TARGET_KERNEL_CLANG_VERSION := prelude
 TARGET_KERNEL_ADDITIONAL_FLAGS += LD=$(shell pwd)/prebuilts/clang/host/linux-x86/clang-prelude/bin/ld.lld
 TARGET_KERNEL_ADDITIONAL_FLAGS += AR=$(shell pwd)/prebuilts/clang/host/linux-x86/clang-prelude/bin/llvm-ar
+TARGET_KERNEL_ADDITIONAL_FLAGS += LLVM=1 LLVM_IAS=1 LD_COMPAT=$(shell pwd)/prebuilts/clang/host/linux-x86/clang-prelude/bin/ld.lld
 KERNEL_SUPPORTS_LLVM_TOOLS := true
 
 BOARD_KERNEL_CMDLINE := console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0xa90000
@@ -119,7 +120,9 @@ BOARD_KERNEL_CMDLINE += androidboot.usbcontroller=a600000.dwc3
 #BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
 BOARD_KERNEL_CMDLINE += service_locator.enable=1 swiotlb=2048
 BOARD_KERNEL_CMDLINE += loop.max_part=7
-BOARD_KERNEL_CMDLINE += androidboot.init_fatal_reboot_target=recovery
+BOARD_KERNEL_CMDLINE += androidboot.init_fatal_reboot_target=bootloader
+# PE uses separate partitions in both normal boot and recovery.
+BOARD_KERNEL_CMDLINE += androidboot.fstab_suffix=crux_uboot
 BOARD_KERNEL_CMDLINE += kpti=off
 BOARD_KERNEL_CMDLINE += androidboot.boot_devices=soc/1d84000.ufshc
 
@@ -162,7 +165,7 @@ TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 BOARD_USES_QCOM_HARDWARE := true
 
 # Recovery
-TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab.qcom
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab.crux_uboot
 TARGET_RECOVERY_PIXEL_FORMAT := "BGRA_8888"
 
 # Releasetools
