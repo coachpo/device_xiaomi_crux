@@ -7,6 +7,7 @@ genfscon sysfs /devices/platform/soc/soc:qcom,dsi-display-primary/hbm           
 # FOD
 genfscon sysfs /devices/platform/soc/ae00000.qcom,mdss_mdp/drm/card0/card0-DSI-1/dim_layer_enable                                                                   u:object_r:sysfs_fod:s0
 genfscon sysfs /devices/platform/soc/ae00000.qcom,mdss_mdp/drm/card0/card0-DSI-1/fod_ui_ready                                                                      u:object_r:sysfs_fod:s0
+genfscon sysfs /devices/virtual/touch/tp_dev/fod_state                                                                                                           u:object_r:sysfs_udfps_touch:s0
 
 # Insmod
 genfscon sysfs /kernel/boot_cdsp/boot                                                                                                                               u:object_r:sysfs_msm_boot:s0

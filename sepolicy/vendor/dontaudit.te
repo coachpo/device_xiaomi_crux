@@ -5,7 +5,6 @@ dontaudit {
   platform_app
   system_app
   surfaceflinger
-  vendor_sensors
 } sysfs_msm_subsys:dir search;
 
 # Ignore harmless QCOM denials

@@ -193,6 +193,7 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.fingerprint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.fingerprint.xml \
+    $(LOCAL_PATH)/rootdir/etc/init.crux-fingerprint-calibration.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.crux-fingerprint-calibration.rc
 
 # Fstab
 PRODUCT_COPY_FILES += \
@@ -448,7 +449,9 @@ PRODUCT_PACKAGES += \
     sensors.crux_udfps
 
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/sensors/hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/hals.conf
+    $(LOCAL_PATH)/configs/sensors/hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/hals.conf \
+    $(LOCAL_PATH)/rootdir/bin/init.crux-sensor-registry.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.crux-sensor-registry.sh \
+    $(LOCAL_PATH)/rootdir/etc/init.crux-sensor-registry.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.crux-sensor-registry.rc
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.accelerometer.xml \

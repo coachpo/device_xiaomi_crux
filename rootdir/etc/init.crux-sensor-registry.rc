@@ -1,0 +1,13 @@
+on post-fs
+    # Persist is mounted by fs; finish before late-fs starts the FastRPC early HAL.
+    chown system system /mnt/vendor/persist/sensors
+    chown system system /mnt/vendor/persist/sensors/registry
+    chown system system /mnt/vendor/persist/sensors/registry/registry
+    exec_start vendor.crux-sensor-registry
+
+service vendor.crux-sensor-registry /vendor/bin/init.crux-sensor-registry.sh
+    user system
+    group system
+    capabilities CHOWN
+    disabled
+    oneshot

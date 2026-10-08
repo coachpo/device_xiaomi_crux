@@ -58,6 +58,7 @@
 /dev/thermal(/.*)?                                                                                     u:object_r:thermal_link_device:s0
 
 # Sensors
+/vendor/bin/init\.crux-sensor-registry\.sh u:object_r:vendor_init-qcom-sensors-sh_exec:s0
 /dev/elliptic(.*)?                                                                                     u:object_r:sound_device:s0
 
 # USB
