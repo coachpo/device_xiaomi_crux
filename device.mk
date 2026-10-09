@@ -122,7 +122,7 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.camera.raw.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.raw.xml
 
 PRODUCT_COPY_FILES += \
-    prebuilts/vndk/v29/arm64/arch-arm64-armv8-a/shared/vndk-sp/libc++.so:$(TARGET_COPY_OUT_VENDOR)/lib64/libc++.so
+    prebuilts/vndk/v29/arm64/arch-arm64-armv8-a/shared/vndk-sp/libc++.so:$(TARGET_COPY_OUT_VENDOR)/lib64/vndk-sp/libc++.so
 
 # Device-specific settings
 PRODUCT_PACKAGES += \
@@ -196,12 +196,18 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/etc/init.crux-fingerprint-calibration.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.crux-fingerprint-calibration.rc
 
 # Fstab
+ifeq ($(TARGET_PRODUCT),aosp_crux_release)
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.qcom \
+    $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom
+else
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.qcom \
     $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom \
     $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.crux_uboot \
     $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_RAMDISK)/fstab.crux_uboot \
     $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:recovery/root/fstab.crux_uboot
+endif
 
 # The early daemon is platform-linked so diagnostics do not depend on data/APEX.
 ifneq ($(filter aosp_crux:userdebug aosp_crux:eng,$(TARGET_PRODUCT):$(TARGET_BUILD_VARIANT)),)

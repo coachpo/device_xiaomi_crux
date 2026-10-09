@@ -112,19 +112,21 @@ TARGET_KERNEL_ADDITIONAL_FLAGS += AR=$(shell pwd)/prebuilts/clang/host/linux-x86
 TARGET_KERNEL_ADDITIONAL_FLAGS += LLVM=1 LLVM_IAS=1 LD_COMPAT=$(shell pwd)/prebuilts/clang/host/linux-x86/clang-prelude/bin/ld.lld
 KERNEL_SUPPORTS_LLVM_TOOLS := true
 
-BOARD_KERNEL_CMDLINE := console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0xa90000
-BOARD_KERNEL_CMDLINE += androidboot.hardware=qcom androidboot.console=ttyMSM0
-BOARD_KERNEL_CMDLINE += androidboot.memcg=1 lpm_levels.sleep_disabled=1
-BOARD_KERNEL_CMDLINE += video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237
+BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom androidboot.memcg=1
 BOARD_KERNEL_CMDLINE += androidboot.usbcontroller=a600000.dwc3
-#BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
 BOARD_KERNEL_CMDLINE += service_locator.enable=1 swiotlb=2048
 BOARD_KERNEL_CMDLINE += loop.max_part=7
+BOARD_KERNEL_CMDLINE += androidboot.boot_devices=soc/1d84000.ufshc
+
+ifneq ($(TARGET_PRODUCT),aosp_crux_release)
+# Retain the U-Boot development diagnostic and isolation profile.
+BOARD_KERNEL_CMDLINE += console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0xa90000
+BOARD_KERNEL_CMDLINE += androidboot.console=ttyMSM0 lpm_levels.sleep_disabled=1
+BOARD_KERNEL_CMDLINE += video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237
 BOARD_KERNEL_CMDLINE += androidboot.init_fatal_reboot_target=bootloader
-# PE uses separate partitions in both normal boot and recovery.
 BOARD_KERNEL_CMDLINE += androidboot.fstab_suffix=crux_uboot
 BOARD_KERNEL_CMDLINE += kpti=off
-BOARD_KERNEL_CMDLINE += androidboot.boot_devices=soc/1d84000.ufshc
+endif
 
 # Media
 TARGET_USES_ION := true
@@ -132,10 +134,16 @@ TARGET_DISABLED_UBWC := true
 
 # Partitions
 BOARD_BOOTIMAGE_PARTITION_SIZE := 134217728
+ifeq ($(TARGET_PRODUCT),aosp_crux_release)
+# Official Crux GPT capacities; development FIT containers retain their limits.
+BOARD_CACHEIMAGE_PARTITION_SIZE := 402653184
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 134217728
+else
 BOARD_CACHEIMAGE_PARTITION_SIZE := 268435456
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
+endif
 BOARD_DTBOIMG_PARTITION_SIZE := 33554432
 BOARD_VBMETAIMAGE_PARTITION_SIZE := 131072
-BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
 BOARD_FLASH_BLOCK_SIZE := 262144 # (BOARD_KERNEL_PAGESIZE * 64)
 
 BOARD_SYSTEMIMAGE_PARTITION_SIZE := 3758096384
@@ -165,7 +173,14 @@ TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 BOARD_USES_QCOM_HARDWARE := true
 
 # Recovery
+ifeq ($(TARGET_PRODUCT),aosp_crux_release)
+# Standalone stock-ABL Recovery carries its overlay independently.
+BOARD_INCLUDE_RECOVERY_DTBO := true
+BOARD_USES_FULL_RECOVERY_IMAGE := true
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab.qcom
+else
 TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab.crux_uboot
+endif
 TARGET_RECOVERY_PIXEL_FORMAT := "BGRA_8888"
 
 # Releasetools
