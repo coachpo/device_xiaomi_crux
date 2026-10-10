@@ -137,3 +137,39 @@ It uses isolated temporary source/key placeholders, mocked platform commands and
 a synthetic whole-file signature envelope. No real release keys, ROM artifacts,
 JDK launch, signing or device access are needed. The suite checks wrapper contracts;
 trusted-key cryptographic acceptance remains the native Recovery integration test.
+
+## Fastboot bundle from an accepted signed release
+
+`package_fastboot.py` packages the final signed public target-files without
+rebuilding or re-signing anything. It requires no private keys or Linux signing
+tools. The six extracted images retain their signed bytes. Use a new output path:
+
+```sh
+python3 device/xiaomi/crux/scripts/package_fastboot.py \
+  --signed-target-files /path/to/accepted/signed-target_files.zip \
+  --output-dir /path/to/Crux-PE13-fastboot-candidate
+```
+
+It produces the unpacked bundle, a ZIP and an adjacent packaging report. The
+bundle contains `flash_crux.py`, macOS/Linux and Windows launchers, instructions,
+image identity/expanded-size metadata and checksums. Input property/coherence
+checks identify the public static non-A/B release; they do not replace the
+release owner's prior APK/APEX/AVB/signature acceptance.
+
+Run `./flash.sh --serial SERIAL` or `flash.cmd --serial SERIAL` in bootloader
+fastboot. `--dry-run` checks files and the live loader/partitions without writing.
+`--no-reboot` leaves the device in fastboot after success. The runner preserves
+userdata, metadata and cache, writes only recovery/system/vendor/dtbo/vbmeta/boot,
+and stops without rebooting if a flash fails. Reinstalling the same complete
+bundle is the rescue route when stock ABL fastboot remains accessible.
+
+First installation with incompatible existing data still requires the matching
+PE Recovery data-reset procedure. This tool performs no wipe, bootloader unlock,
+relock, firmware/GPT change or device-specific misc/BCB restoration.
+
+Run the runner's portable host contracts from the Android source root:
+
+```sh
+python3 -B -m unittest discover \
+  -s device/xiaomi/crux/scripts/tests -p test_flash_crux.py -v
+```
