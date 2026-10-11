@@ -6,5 +6,8 @@ $(call inherit-product, device/xiaomi/crux/aosp_crux.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/non_ab_device.mk)
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.recovery_update=true
 
+PRODUCT_PACKAGES += Updates
+DEVICE_PACKAGE_OVERLAYS += device/xiaomi/crux/overlay-release
+
 PRODUCT_NAME := aosp_crux_release
 PRODUCT_DEVICE := crux
