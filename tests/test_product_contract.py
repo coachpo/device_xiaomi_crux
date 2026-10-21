@@ -200,8 +200,7 @@ class ProductContractTest(unittest.TestCase):
             with self.subTest(product=product, variant=variant):
                 entries = read_fstab(values["TARGET_RECOVERY_FSTAB"])
                 # Recovery raw-wipes metadata-encrypted data; init must format blank public data.
-                self.assertEqual("formattable" in entries["/data"][3],
-                                 product == "aosp_crux_release")
+                self.assertTrue("formattable" in entries["/data"][3])
 
     def test_selected_fstab_preserves_encryption_firmware_and_recovery_contracts(self):
         for (product, variant), values in self.contracts.items():
@@ -231,8 +230,7 @@ class ProductContractTest(unittest.TestCase):
                 self.assertIn("inlinecrypt", entries["/data"][2])
                 self.assertEqual({flag for flag in entries["/data"][3]
                                   if flag.startswith("fileencryption=")},
-                                 {"fileencryption=ice::v2"} if product == "aosp_crux_release"
-                                 else {"fileencryption=ice"})
+                                 {"fileencryption=ice::v2"})
                 self.assertTrue({"latemount", "wait", "check",
                                  "keydirectory=/metadata/vold/metadata_encryption", "quota",
                                  "reservedsize=128M"} <= entries["/data"][3])
