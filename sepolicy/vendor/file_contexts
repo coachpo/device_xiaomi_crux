@@ -78,3 +78,6 @@
 /dev/block/platform/soc/1d84000\.ufshc/by-name/pevendor         u:object_r:system_block_device:s0
 /dev/block/platform/soc/1d84000\.ufshc/by-name/peuserdata       u:object_r:userdata_block_device:s0
 /dev/block/platform/soc/1d84000\.ufshc/by-name/pemetadata       u:object_r:metadata_block_device:s0
+
+# crux-install/1 Dev OTA transactions: written by the ROM, read and updated by PE Recovery.
+/metadata/crux_ota(/.*)?                                      u:object_r:ota_metadata_file:s0

@@ -1,0 +1,36 @@
+// crux-install/1 installer core (shared with the B TWRP ZIP update-binary):
+// the PE Recovery installer and the ROM-side helper services of CruxUpdater.
+// Source of record: the Crux workspace u-boot-port/installer/.
+cc_binary {
+    name: "crux-installer",
+    recovery_available: true,
+    static_executable: true,
+    srcs: [
+        "crux_installer.c",
+        "third_party/mincrypt/p256.c",
+        "third_party/mincrypt/p256_ec.c",
+        "third_party/mincrypt/p256_ecdsa.c",
+        "third_party/mincrypt/sha256.c",
+        "third_party/zstd/common/*.c",
+        "third_party/zstd/decompress/*.c",
+    ],
+    local_include_dirs: [
+        "third_party/mincrypt/includes",
+        "third_party/zstd",
+        "third_party/zstd/common",
+    ],
+    cflags: [
+        "-DZSTD_DISABLE_ASM",
+        "-DZSTD_LEGACY_SUPPORT=0",
+        "-DXXH_NAMESPACE=CRUX_ZSTD_",
+        "-Wno-unused-parameter",
+    ],
+}
+
+prebuilt_etc {
+    name: "crux-ota-a-p256.pub",
+    src: "keys/crux-a-ota-2026-11-07.p256.pub.hex",
+    filename: "a-p256.pub",
+    sub_dir: "crux-ota",
+    recovery_available: true,
+}
