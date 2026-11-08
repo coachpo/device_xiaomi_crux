@@ -44,6 +44,7 @@
  */
 
 #define _GNU_SOURCE
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -58,7 +59,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #ifndef CRUX_TEST
-#include <dirent.h>
 #include <linux/fiemap.h>
 #include <linux/hdreg.h>
 #include <linux/input.h>
@@ -1795,6 +1795,41 @@ static int service_prepare(void)
 	return 0;
 }
 
+/*
+ * Once a transaction has finished, no other one is in flight (the app prepares a new
+ * one only after a full download), so every transaction directory, including those of
+ * superseded or failed preparations, and every older result can go. Result files carry
+ * no usable time order, so only the finished transaction's own result is kept.
+ */
+static void retire_records(const char *txn)
+{
+	char dir[600], keep[80], path[1024];
+	DIR *d;
+	struct dirent *de;
+
+	at(dir, sizeof(dir), "/metadata/crux_ota/txn");
+	d = opendir(dir);
+	while (d && (de = readdir(d))) {
+		if (de->d_name[0] == '.')
+			continue;
+		snprintf(path, sizeof(path), "%s/%s", dir, de->d_name);
+		remove_tree(path);
+	}
+	if (d)
+		closedir(d);
+	snprintf(keep, sizeof(keep), "%s.txt", txn);
+	at(dir, sizeof(dir), "/metadata/crux_ota/result");
+	d = opendir(dir);
+	while (d && (de = readdir(d))) {
+		if (de->d_name[0] == '.' || !strcmp(de->d_name, keep))
+			continue;
+		snprintf(path, sizeof(path), "%s/%s", dir, de->d_name);
+		unlink(path);
+	}
+	if (d)
+		closedir(d);
+}
+
 /* At boot: report the last transaction to the app and retire it once it has finished. */
 static int service_result(void)
 {
@@ -1822,7 +1857,9 @@ static int service_result(void)
 		if (!strncmp(request + i, "crux_r_txn=", 11))
 			snprintf(vals[0], sizeof(vals[0]), "%s", request + i + 11);
 	}
-	if (!vals[0][0])
+	/* The transaction id names files to delete: accept only what prepare_main writes. */
+	if (!vals[0][0] || vals[0][0] == '.' ||
+	    strspn(vals[0], "abcdefghijklmnopqrstuvwxyz0123456789-._ABCDEFGHIJKLMNOPQRSTUVWXYZ") != strlen(vals[0]))
 		return 0;
 	at(path, sizeof(path), "/dev/block/by-name/pesystem");
 	fd = open(path, O_RDONLY);
@@ -1863,7 +1900,8 @@ static int service_result(void)
 		unlink(path);
 		at(dir, sizeof(dir), "/data/ota_package/crux/%s", vals[0]);
 		remove_tree(dir);
-		ui("transaction %s finished (%s); request and download removed", vals[0], stage);
+		retire_records(vals[0]);
+		ui("transaction %s finished (%s); request, download and older records removed", vals[0], stage);
 	}
 	return 0;
 }
