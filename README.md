@@ -6,10 +6,8 @@ blobs are retained intentionally; product identity, hardware-specific inputs and
 kernel interfaces target **Crux**. Device and vendor use `thirteen-plus`; the
 maintained Cepheus-derived Crux kernel uses `thirteen`.
 
-The existing U-Boot development installation and the public stock-ABL product
-have different storage contracts. Public installation and upgrade acceptance
-requires its own signed artifacts and device results; development observations
-do not qualify that route. See [PORTING.md](PORTING.md) for the port references.
+The product boots through the U-Boot development installation and uses the PE
+partitions. See [PORTING.md](PORTING.md) for the port references.
 
 ## Source layout
 
@@ -27,33 +25,15 @@ recovery, and non-A/B static system/vendor partitions. The kernel builds
 No fixed-size userdata image is generated: Crux has multiple storage capacities,
 and recovery formats the actual partition on the device.
 
-Storage routing is selected by `TARGET_PRODUCT`, independently of `user`,
-`userdebug` or `eng`:
-
-| Product | Loader and Android volumes | Fstab and development ADB |
-| --- | --- | --- |
-| `aosp_crux_release` | Stock ABL; official `system`, `vendor`, `userdata`, `metadata`, `boot`, `recovery`, `misc` and `cache` | Ordinary `fstab.qcom` in ramdisk/vendor and the generated Recovery fstab; no `crux_uboot` suffix or aliases; early development ADB disabled |
-| `aosp_crux` | U-Boot development menu; `pesystem`, `pevendor`, `peuserdata` and `pemetadata` | Canonical `fstab.crux_uboot`, its ramdisk/vendor aliases and Recovery root alias; `crux_uboot` suffix; early ADB only for `userdebug` and `eng` |
-
-The public fstab preserves FBE and the metadata-encryption key directory, and
-exposes boot/Recovery/misc/cache to Recovery. Installed modem, DSP, Bluetooth
-firmware and persist keep their existing contracts. Public boot arguments omit
-the serial-console, virtual-framebuffer, sleep-disable, KPTI-disable and PE
-development settings. Public Recovery/cache capacities follow the verified
-official GPT (128 MiB/384 MiB); development keeps its 64 MiB/256 MiB limits.
-The system/vendor image limits remain 3.5 GiB/1.5 GiB pending final AVB and image
-inspection against the larger official partitions.
-
-Public Recovery uses boot header v1 with an embedded same-source DTBO payload.
-The standalone image carries its overlay independently of the DTBO partition.
-Public updates retain the complete signed Recovery image at
-`/vendor/etc/recovery.img`. On first OS boot, the standard vendor Recovery updater
-checks the installed image and flashes the complete image when it differs.
-The public product installs `applypatch` and its `vendor_flash_recovery` service,
-with `persist.sys.recovery_update=true` as the default. Normal Android boots honor
-a saved `false`. Charger-only startup can use the shipped default before loading
-saved properties; setting `false` does not cancel an update already running.
-Development FIT handling retains its existing overlay path.
+`aosp_crux` loads through the U-Boot development menu and uses `pesystem`,
+`pevendor`, `peuserdata` and `pemetadata`. The canonical `fstab.crux_uboot`
+supplies its ramdisk/vendor aliases and the Recovery root alias, with the
+`crux_uboot` suffix; early development ADB is packaged only for `userdebug` and
+`eng`. Installed modem, DSP, Bluetooth firmware and persist keep their existing
+contracts. Recovery and cache keep the 64 MiB/256 MiB development limits, and
+the system/vendor image limits are 3.5 GiB/1.5 GiB. The ROM never carries the
+vendor Recovery updater: the physical Recovery partition holds the U-Boot
+Recovery container.
 
 ## Dependencies and build
 
@@ -74,25 +54,13 @@ three repositories:
 
 ```sh
 source build/envsetup.sh
-lunch aosp_crux_release-user
-m target-files-package otapackage
-```
-
-Public distribution uses the signed `aosp_crux_release-user` target-files and
-Recovery ZIP. The `userdebug` and `eng` release variants retain public storage
-routing for engineering checks; `eng` retains the platform's normal unauthenticated
-ADB policy. All release variants omit the separate early development daemon.
-
-For the existing isolated development installation:
-
-```sh
 lunch aosp_crux-userdebug
 m bootimage recoveryimage systemimage vendorimage
 ```
 
-`aosp_crux-user` and `aosp_crux-eng` are also declared. Development images are
-U-Boot menu inputs; their target-files are not public installation inputs.
-Record the selected lunch target, the platform manifest and exact revisions:
+`aosp_crux-user` and `aosp_crux-eng` are also declared. The images are U-Boot
+menu inputs; they are packaged and installed outside this tree. Record the
+selected lunch target, the platform manifest and exact revisions:
 
 ```sh
 repo manifest -r -o crux-build-manifest.xml
@@ -102,19 +70,12 @@ repo status
 A revision manifest does not include uncommitted changes; retain their patches
 alongside it. An unchanged branch name does not identify a reproducible build.
 
-## Firmware and OTA contract
+## Firmware contract
 
 Install compatible official **Crux** firmware separately before testing the ROM.
 The exact minimum stock firmware version has not been established by this tree.
 The ROM retains the installed bootloader, modem and other stock firmware. It
 does not depend on `vendor/xiaomi-firmware` and has no partition conversion step.
-
-For `aosp_crux_release`, the platform's non-A/B OTA generator handles Android
-partitions such as boot, system and vendor. The device extension additionally installs **DTBO and vbmeta
-from the same target-files archive**, checking each write result. Missing, empty
-or duplicate required images and bundled `RADIO/` or `INSTALL/firmware-update/`
-payloads fail OTA generation. This contract is identical for full and incremental
-packages; incremental hooks use the target archive, not the old source images.
 
 ## Proprietary files
 
@@ -147,7 +108,7 @@ python3 -B kernel/xiaomi/crux-pe-cepheus/tools/testing/selftests/cpufreq/crux_in
 
 These checks cover local contracts and failure paths. Before distributing a ROM,
 also build the complete target, run its VINTF/SELinux/ELF checks, inspect the final
-boot and DTBO images, and verify the generated OTA partition writes. Actual
+boot and DTBO images, and verify the installer's partition writes. Actual
 fingerprint illumination, touch gestures, temperature reporting, radio and
 display behavior require device testing. Keep logcat, tombstones and pstore logs
 with the source and build records.

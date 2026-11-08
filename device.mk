@@ -196,18 +196,12 @@ PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/etc/init.crux-fingerprint-calibration.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.crux-fingerprint-calibration.rc
 
 # Fstab
-ifeq ($(TARGET_PRODUCT),aosp_crux_release)
-PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.qcom \
-    $(LOCAL_PATH)/rootdir/etc/fstab.qcom:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom
-else
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.qcom \
     $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_RAMDISK)/fstab.qcom \
     $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.crux_uboot \
     $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:$(TARGET_COPY_OUT_RAMDISK)/fstab.crux_uboot \
     $(LOCAL_PATH)/rootdir/etc/fstab.crux_uboot:recovery/root/fstab.crux_uboot
-endif
 
 # The early daemon is platform-linked so diagnostics do not depend on data/APEX.
 ifneq ($(filter aosp_crux:userdebug aosp_crux:eng,$(TARGET_PRODUCT):$(TARGET_BUILD_VARIANT)),)

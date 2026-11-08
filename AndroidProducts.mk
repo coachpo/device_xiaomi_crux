@@ -15,13 +15,9 @@
 #
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/aosp_crux.mk \
-    $(LOCAL_DIR)/aosp_crux_release.mk
+    $(LOCAL_DIR)/aosp_crux.mk
 
 COMMON_LUNCH_CHOICES := \
     aosp_crux-user \
     aosp_crux-userdebug \
-    aosp_crux-eng \
-    aosp_crux_release-user \
-    aosp_crux_release-userdebug \
-    aosp_crux_release-eng
+    aosp_crux-eng

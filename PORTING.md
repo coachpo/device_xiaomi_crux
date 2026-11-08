@@ -17,7 +17,7 @@ describes source integration, not a list of hardware certified to work.
 
 | Area | Crux baseline |
 | --- | --- |
-| Product | `aosp_crux`, `PRODUCT_DEVICE=crux`, Crux OTA assertion, `Mi9 Pro 5G` identity. No EEA product suffix is invented. |
+| Product | `aosp_crux`, `PRODUCT_DEVICE=crux`, `Mi9 Pro 5G` identity. No EEA product suffix is invented. |
 | Platform | SM8150-AC / Snapdragon 855 Plus; minimum 8 GiB RAM profile; battery statistics use the specified 4000 mAh typical capacity. |
 | Kernel | `kernel/xiaomi/crux`, `crux_defconfig`, `Image-dtb`, Crux DTBO; one Crux Kconfig declaration and 4+3+1 CPU masks. `/proc/config.gz` reflects the actual build configuration. |
 | Storage | Non-A/B, separate recovery, static system/vendor partitions. The Crux DT overlay selects the packaged first-stage fstab. No dynamic partition conversion or fixed-capacity userdata image is included. |
@@ -27,7 +27,7 @@ describes source integration, not a list of hardware certified to work.
 | Services | AIDL lights, thermal helper and HAL startup, DSP readiness, and modem helper startup have explicit product/init wiring. |
 | Codec sandbox | The arm64 software codec extension is installed at the path read by PE's mediaswcodec service. |
 | DRM | Widevine HAL and data directory retained; the irrelevant Oreo-to-Pie migration hook is removed by a reproducible extraction fixup. |
-| Firmware | The ROM keeps the installed official Crux bootloader and radio firmware. Runtime DSP/modem loaders use that firmware; OTA packaging does not replace it. |
+| Firmware | The ROM keeps the installed official Crux bootloader and radio firmware. Runtime DSP/modem loaders use that firmware; the ROM images do not replace it. |
 
 Partition size declarations inherited by this source baseline are image build
 limits, not a substitute for reading the real device's GPT. The old donor
@@ -66,18 +66,19 @@ python3 -B kernel/xiaomi/crux/tools/testing/selftests/drivers/gpu/crux_fod_test.
 ```
 
 The checks use the actual product/board makefiles, the kernel's Kconfig and
-DT tooling, real ZIP archives, and compiled production functions where practical.
+DT tooling, and compiled production functions where practical.
 Android services, hardware and some kernel objects use boundary test doubles;
 passing these checks does not prove Android linking or device behavior.
 
 ## Full-build and device acceptance
 
 Use the instructions in `README.md` with a complete PE Android 13 checkout on
-Linux. Retain the exact revision manifest, any local patches, target-files ZIP
-and final OTA ZIP for each test build.
+Linux. Retain the exact revision manifest, any local patches and the built
+images for each test build.
 
 Before a device test, establish the complete build's VINTF and SELinux results,
-ELF dependencies, generated boot/DTBO contents and OTA partition write list.
+ELF dependencies, generated boot/DTBO contents and the installer's partition
+write list.
 With a recovered test device, collect `logcat -b all`, kernel/pstore logs and
 tombstones together with the build records.
 

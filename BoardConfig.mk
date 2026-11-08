@@ -46,9 +46,6 @@ TARGET_2ND_CPU_ABI2 := armeabi
 TARGET_2ND_CPU_VARIANT := generic
 TARGET_2ND_CPU_VARIANT_RUNTIME := cortex-a76
 
-# Assert
-TARGET_OTA_ASSERT_DEVICE := crux
-
 # Audio
 AUDIO_FEATURE_ENABLED_INSTANCE_ID := true
 TARGET_PROVIDES_AUDIO_EXTNS := true
@@ -118,15 +115,13 @@ BOARD_KERNEL_CMDLINE += service_locator.enable=1 swiotlb=2048
 BOARD_KERNEL_CMDLINE += loop.max_part=7
 BOARD_KERNEL_CMDLINE += androidboot.boot_devices=soc/1d84000.ufshc
 
-ifneq ($(TARGET_PRODUCT),aosp_crux_release)
-# Retain the U-Boot development diagnostic and isolation profile.
+# U-Boot development diagnostic and isolation profile.
 BOARD_KERNEL_CMDLINE += console=ttyMSM0,115200n8 earlycon=msm_geni_serial,0xa90000
 BOARD_KERNEL_CMDLINE += androidboot.console=ttyMSM0 lpm_levels.sleep_disabled=1
 BOARD_KERNEL_CMDLINE += video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237
 BOARD_KERNEL_CMDLINE += androidboot.init_fatal_reboot_target=bootloader
 BOARD_KERNEL_CMDLINE += androidboot.fstab_suffix=crux_uboot
 BOARD_KERNEL_CMDLINE += kpti=off
-endif
 
 # Media
 TARGET_USES_ION := true
@@ -134,14 +129,8 @@ TARGET_DISABLED_UBWC := true
 
 # Partitions
 BOARD_BOOTIMAGE_PARTITION_SIZE := 134217728
-ifeq ($(TARGET_PRODUCT),aosp_crux_release)
-# Official Crux GPT capacities; development FIT containers retain their limits.
-BOARD_CACHEIMAGE_PARTITION_SIZE := 402653184
-BOARD_RECOVERYIMAGE_PARTITION_SIZE := 134217728
-else
 BOARD_CACHEIMAGE_PARTITION_SIZE := 268435456
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
-endif
 BOARD_DTBOIMG_PARTITION_SIZE := 33554432
 BOARD_VBMETAIMAGE_PARTITION_SIZE := 131072
 BOARD_FLASH_BLOCK_SIZE := 262144 # (BOARD_KERNEL_PAGESIZE * 64)
@@ -173,18 +162,8 @@ TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 BOARD_USES_QCOM_HARDWARE := true
 
 # Recovery
-ifeq ($(TARGET_PRODUCT),aosp_crux_release)
-# Standalone stock-ABL Recovery carries its overlay independently.
-BOARD_INCLUDE_RECOVERY_DTBO := true
-BOARD_USES_FULL_RECOVERY_IMAGE := true
-TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab.qcom
-else
 TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/rootdir/etc/fstab.crux_uboot
-endif
 TARGET_RECOVERY_PIXEL_FORMAT := "BGRA_8888"
-
-# Releasetools
-TARGET_RELEASETOOLS_EXTENSIONS := $(DEVICE_PATH)
 
 # RIL
 ENABLE_VENDOR_RIL_SERVICE := true

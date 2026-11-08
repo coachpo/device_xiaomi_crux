@@ -48,8 +48,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     device/xiaomi/crux/crux-installer/crux_ota.rc:$(TARGET_COPY_OUT_SYSTEM)/etc/init/crux_ota.rc
 
-# Crux has multiple storage capacities. Recovery formats the actual userdata
-# partition; a ROM OTA must not carry a fixed-size donor userdata image.
+# Crux has multiple storage capacities. The installer formats the actual PE
+# userdata partition, so no fixed-size donor userdata image is built.
 PRODUCT_BUILD_USERDATA_IMAGE := false
-
-# Keep the installed stock firmware. ROM OTAs only update Android images.

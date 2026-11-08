@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="config_otaServerUrl" translatable="false">https://coachpo.github.io/crux-pe13-ota/updates/%1$s/%2$s.json</string>
-    <string name="config_otaChangelogUrl" translatable="false">https://github.com/coachpo/crux-pe13-ota/releases</string>
-</resources>

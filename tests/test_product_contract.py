@@ -11,12 +11,11 @@ import unittest
 
 DEVICE = Path(__file__).resolve().parents[1]
 ANDROID = DEVICE.parents[2]
-PRODUCTS = ("aosp_crux", "aosp_crux_release")
+PRODUCTS = ("aosp_crux",)
 VARIANTS = ("user", "userdebug", "eng")
 VARIABLES = (
     "PRODUCT_MAKEFILES", "COMMON_LUNCH_CHOICES", "PRODUCT_NAME", "PRODUCT_DEVICE",
-    "PRODUCT_BRAND", "PRODUCT_MODEL", "PRODUCT_MANUFACTURER",
-    "TARGET_OTA_ASSERT_DEVICE", "TARGET_USES_AOSP_RECOVERY",
+    "PRODUCT_BRAND", "PRODUCT_MODEL", "PRODUCT_MANUFACTURER", "TARGET_USES_AOSP_RECOVERY",
     "TARGET_KERNEL_SOURCE", "TARGET_KERNEL_CONFIG", "BOARD_BOOT_HEADER_VERSION",
     "BOARD_MKBOOTIMG_ARGS", "BOARD_KERNEL_CMDLINE",
     "BOARD_KERNEL_SEPARATED_DTBO", "BOARD_INCLUDE_RECOVERY_DTBO",
@@ -44,8 +43,6 @@ def evaluate_contract(product, variant):
             ("vendor/xiaomi/crux", ANDROID / "vendor/xiaomi/crux"),
             ("vendor/aosp", ANDROID / "vendor/aosp"),
             ("kernel/xiaomi/crux-pe-cepheus", ANDROID / "kernel/xiaomi/crux-pe-cepheus"),
-            ("build/make/target/product/non_ab_device.mk",
-             ANDROID / "build/make/target/product/non_ab_device.mk"),
         ):
             target = root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -54,11 +51,10 @@ def evaluate_contract(product, variant):
         policy.parent.mkdir(parents=True)
         policy.write_text("")
         harness = root / "contract.mk"
-        # Evaluate local inheritance and the explicit non-A/B package contract.
-        # Other platform products and merged policy remain image-check boundaries.
+        # Evaluate local inheritance only. Other platform products and merged
+        # policy remain image-check boundaries.
         harness.write_text(
-            "inherit-product = $(if $(filter device/xiaomi/crux/% "
-            "$(SRC_TARGET_DIR)/product/non_ab_device.mk,$(1)),$(eval include $(1)))\n"
+            "inherit-product = $(if $(filter device/xiaomi/crux/%,$(1)),$(eval include $(1)))\n"
             "SRC_TARGET_DIR := build/make/target\n"
             "LOCAL_DIR := device/xiaomi/crux\nLOCAL_PATH := device/xiaomi/crux\n"
             "TARGET_COPY_OUT_SYSTEM := system\nTARGET_COPY_OUT_SYSTEM_EXT := system_ext\n"
@@ -106,10 +102,12 @@ class ProductContractTest(unittest.TestCase):
         common = {
             "PRODUCT_DEVICE": "crux", "PRODUCT_BRAND": "Xiaomi",
             "PRODUCT_MODEL": "Mi9 Pro 5G", "PRODUCT_MANUFACTURER": "Xiaomi",
-            "TARGET_OTA_ASSERT_DEVICE": "crux", "TARGET_USES_AOSP_RECOVERY": "true",
+            "TARGET_USES_AOSP_RECOVERY": "true",
             "TARGET_KERNEL_SOURCE": "kernel/xiaomi/crux-pe-cepheus",
             "TARGET_KERNEL_CONFIG": "crux_defconfig", "BOARD_BOOT_HEADER_VERSION": "1",
             "BOARD_BOOTIMAGE_PARTITION_SIZE": "134217728",
+            "BOARD_RECOVERYIMAGE_PARTITION_SIZE": "67108864",
+            "BOARD_CACHEIMAGE_PARTITION_SIZE": "268435456",
             "BOARD_DTBOIMG_PARTITION_SIZE": "33554432",
             "BOARD_VBMETAIMAGE_PARTITION_SIZE": "131072",
             "BOARD_SYSTEMIMAGE_PARTITION_SIZE": "3758096384",
@@ -122,59 +120,49 @@ class ProductContractTest(unittest.TestCase):
                 for key, expected in common.items():
                     self.assertEqual(values[key], expected, key)
                 self.assertEqual(values["PRODUCT_NAME"], product)
-                release = product == "aosp_crux_release"
-                self.assertEqual(values["BOARD_RECOVERYIMAGE_PARTITION_SIZE"],
-                                 "134217728" if release else "67108864")
-                self.assertEqual(values["BOARD_CACHEIMAGE_PARTITION_SIZE"],
-                                 "402653184" if release else "268435456")
                 self.assertIn("--header_version 1", values["BOARD_MKBOOTIMG_ARGS"])
                 self.assertIn("--flags 3", values["BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS"])
                 self.assertNotEqual(values["AB_OTA_UPDATER"], "true")
-                self.assertIn(f"device/xiaomi/crux/{product}.mk",
-                              values["PRODUCT_MAKEFILES"].split())
-                self.assertIn(f"{product}-{variant}", values["COMMON_LUNCH_CHOICES"].split())
+                self.assertEqual(values["PRODUCT_MAKEFILES"].split(), [f"device/xiaomi/crux/{product}.mk"])
+                self.assertEqual(values["COMMON_LUNCH_CHOICES"].split(),
+                                 [f"{product}-{name}" for name in VARIANTS])
 
-    def test_public_recovery_image_contract(self):
+    def test_recovery_image_contract(self):
         for (product, variant), values in self.contracts.items():
             with self.subTest(product=product, variant=variant):
                 self.assertEqual(values["BOARD_KERNEL_SEPARATED_DTBO"], "true")
                 for key in ("BOARD_INCLUDE_RECOVERY_DTBO", "BOARD_USES_FULL_RECOVERY_IMAGE"):
-                    self.assertEqual(values[key],
-                                     "true" if product == "aosp_crux_release" else "")
+                    self.assertEqual(values[key], "")
                 self.assertEqual(values["BOARD_PREBUILT_RECOVERY_DTBOIMAGE"], "")
                 self.assertEqual(values["BOARD_PREBUILT_DTBOIMAGE"],
                                  "out/target/product/crux/obj/DTBO_OBJ/arch/arm64/boot/dtbo.img")
                 self.assertEqual(values["TARGET_KERNEL_DTBO"], "dtbo.img")
-                release = product == "aosp_crux_release"
-                self.assertEqual("applypatch" in values["PRODUCT_PACKAGES"].split(), release)
-                defaults = [prop for prop in values["PRODUCT_SYSTEM_DEFAULT_PROPERTIES"].split()
-                            if prop.startswith("persist.sys.recovery_update=")]
-                self.assertEqual(defaults, ["persist.sys.recovery_update=true"] if release else [])
+                # The vendor Recovery updater would rewrite the physical Recovery
+                # partition, which holds the U-Boot Recovery container.
+                self.assertNotIn("applypatch", values["PRODUCT_PACKAGES"].split())
+                self.assertEqual([prop for prop in values["PRODUCT_SYSTEM_DEFAULT_PROPERTIES"].split()
+                                  if prop.startswith("persist.sys.recovery_update=")], [])
 
-    def test_storage_and_early_adb_are_selected_by_product(self):
+    def test_storage_and_early_adb(self):
         init = ("device/xiaomi/crux/rootdir/etc/init.crux-development-adb.rc:"
                 "system/etc/init/init.crux-development-adb.rc")
+        source = "device/xiaomi/crux/rootdir/etc/fstab.crux_uboot"
+        expected = {f"{source}:vendor/etc/fstab.qcom", f"{source}:root/fstab.qcom",
+                    f"{source}:vendor/etc/fstab.crux_uboot", f"{source}:root/fstab.crux_uboot",
+                    f"{source}:recovery/root/fstab.crux_uboot"}
         for (product, variant), values in self.contracts.items():
             with self.subTest(product=product, variant=variant):
-                release = product == "aosp_crux_release"
-                fstab = "fstab.qcom" if release else "fstab.crux_uboot"
-                source = f"device/xiaomi/crux/rootdir/etc/{fstab}"
-                expected = {f"{source}:vendor/etc/fstab.qcom", f"{source}:root/fstab.qcom"}
-                if not release:
-                    expected.update({f"{source}:vendor/etc/fstab.crux_uboot",
-                                     f"{source}:root/fstab.crux_uboot",
-                                     f"{source}:recovery/root/fstab.crux_uboot"})
                 copies = values["PRODUCT_COPY_FILES"].split()
                 self.assertEqual({copy for copy in copies if "/fstab." in copy}, expected)
                 self.assertEqual(values["TARGET_RECOVERY_FSTAB"], source)
-                development = not release and variant in ("userdebug", "eng")
+                development = variant in ("userdebug", "eng")
                 self.assertEqual("adbd_crux" in values["PRODUCT_PACKAGES"].split(), development)
                 self.assertEqual(init in copies, development)
                 self.assertEqual([prop for prop in values["PRODUCT_VENDOR_PROPERTIES"].split()
                                   if prop.startswith("ro.vendor.crux.early_adb=")],
                                  [f"ro.vendor.crux.early_adb={int(development)}"])
 
-    def test_public_cmdline_omits_development_settings(self):
+    def test_cmdline_keeps_development_settings(self):
         common = {"androidboot.hardware=qcom", "androidboot.memcg=1",
                   "androidboot.usbcontroller=a600000.dwc3", "service_locator.enable=1",
                   "swiotlb=2048", "loop.max_part=7",
@@ -186,41 +174,23 @@ class ProductContractTest(unittest.TestCase):
                        "androidboot.fstab_suffix=crux_uboot", "kpti=off"}
         for (product, variant), values in self.contracts.items():
             with self.subTest(product=product, variant=variant):
-                arguments = set(values["BOARD_KERNEL_CMDLINE"].split())
-                self.assertTrue(common <= arguments)
-                if product == "aosp_crux_release":
-                    keys = {argument.split("=", 1)[0] for argument in arguments}
-                    forbidden = {argument.split("=", 1)[0] for argument in development}
-                    self.assertTrue(keys.isdisjoint(forbidden), keys & forbidden)
-                else:
-                    self.assertTrue(development <= arguments)
+                self.assertTrue(common | development <= set(values["BOARD_KERNEL_CMDLINE"].split()))
 
-    def test_public_blank_userdata_initialization_contract(self):
+    def test_blank_userdata_initialization_contract(self):
         for (product, variant), values in self.contracts.items():
             with self.subTest(product=product, variant=variant):
                 entries = read_fstab(values["TARGET_RECOVERY_FSTAB"])
-                # Recovery raw-wipes metadata-encrypted data; init must format blank public data.
+                # Recovery raw-wipes metadata-encrypted data; init must format blank data.
                 self.assertTrue("formattable" in entries["/data"][3])
 
     def test_selected_fstab_preserves_encryption_firmware_and_recovery_contracts(self):
         for (product, variant), values in self.contracts.items():
             entries = read_fstab(values["TARGET_RECOVERY_FSTAB"])
             with self.subTest(product=product, variant=variant):
-                if product == "aosp_crux_release":
-                    # Coldboot supplies direct by-name aliases before second-stage init.
-                    first_stage = {mount: entry[0] for mount, entry in entries.items()
-                                   if "first_stage_mount" in entry[3]}
-                    self.assertEqual(first_stage, {
-                        "/system": "/dev/block/by-name/system",
-                        "/vendor": "/dev/block/by-name/vendor",
-                        "/metadata": "/dev/block/by-name/metadata",
-                        "/vbmeta": "/dev/block/by-name/vbmeta",
-                    })
-                prefix = "" if product == "aosp_crux_release" else "pe"
                 for mount, partition in (("/system", "system"), ("/vendor", "vendor"),
                                          ("/metadata", "metadata"), ("/data", "userdata")):
                     source, kind, options, flags = entries[mount]
-                    self.assertEqual(source.rsplit("/", 1)[-1], prefix + partition)
+                    self.assertEqual(source.rsplit("/", 1)[-1], "pe" + partition)
                     self.assertEqual(kind, "ext4")
                     if mount in ("/system", "/vendor"):
                         self.assertIn("ro", options)
@@ -240,18 +210,7 @@ class ProductContractTest(unittest.TestCase):
                     self.assertEqual(entries[mount][0].rsplit("/", 1)[-1], partition)
                     self.assertIn("ro", entries[mount][2])
                 self.assertEqual(entries["/mnt/vendor/persist"][0].rsplit("/", 1)[-1], "persist")
-                if product == "aosp_crux_release":
-                    for mount in ("/boot", "/recovery"):
-                        self.assertEqual(entries[mount][0].rsplit("/", 1)[-1], mount[1:])
-                        self.assertEqual(entries[mount][1], "emmc")
-                        self.assertIn("recoveryonly", entries[mount][3])
-                    self.assertEqual(entries["/misc"][0].rsplit("/", 1)[-1], "misc")
-                    self.assertEqual(entries["/misc"][1], "emmc")
-                    self.assertEqual(entries["/cache"][0].rsplit("/", 1)[-1], "cache")
-                    self.assertEqual(entries["/cache"][1], "ext4")
-                    self.assertIn("wait", entries["/cache"][3])
-                else:
-                    self.assertTrue({"/boot", "/recovery", "/misc", "/cache"}.isdisjoint(entries))
+                self.assertTrue({"/boot", "/recovery", "/misc", "/cache"}.isdisjoint(entries))
 
 
 if __name__ == "__main__":
