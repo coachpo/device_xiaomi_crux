@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<permissions>
-    <privapp-permissions package="org.coachpo.cruxupdater">
-        <permission name="android.permission.REBOOT"/>
-        <permission name="android.permission.RECOVERY"/>
-    </privapp-permissions>
-</permissions>

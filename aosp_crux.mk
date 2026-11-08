@@ -38,16 +38,6 @@ PRODUCT_MANUFACTURER := Xiaomi
 # Recovery
 TARGET_USES_AOSP_RECOVERY := true
 
-# crux-install/1 Dev OTA: installer (ROM helper and PE Recovery), release key, updater app
-PRODUCT_PACKAGES += \
-    CruxUpdater \
-    crux-installer \
-    crux-installer.recovery \
-    crux-ota-a-p256.pub \
-    crux-ota-a-p256.pub.recovery
-PRODUCT_COPY_FILES += \
-    device/xiaomi/crux/crux-installer/crux_ota.rc:$(TARGET_COPY_OUT_SYSTEM)/etc/init/crux_ota.rc
-
 # Crux has multiple storage capacities. The installer formats the actual PE
 # userdata partition, so no fixed-size donor userdata image is built.
 PRODUCT_BUILD_USERDATA_IMAGE := false

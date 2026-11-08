@@ -1,2 +1,0 @@
-# CruxUpdater asks init to start crux_ota_prepare.
-system_internal_prop(crux_ota_prop)

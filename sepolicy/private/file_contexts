@@ -1,2 +1,1 @@
 /system/bin/adbd_crux u:object_r:adbd_exec:s0
-/system/bin/crux-installer u:object_r:crux_ota_exec:s0

@@ -3,4 +3,3 @@ ro.build.flavor                                   u:object_r:exported_default_pr
 ro.product.mod_device                             u:object_r:build_prop:s0
 ro.cust.test                                      u:object_r:exported_system_prop:s0
 ro.miui.                                          u:object_r:exported_system_prop:s0
-sys.crux_ota.request                              u:object_r:crux_ota_prop:s0 exact string

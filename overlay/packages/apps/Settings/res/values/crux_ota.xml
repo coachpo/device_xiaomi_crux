@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Settings > System > Additional system updates opens the Crux Dev OTA updater. -->
-<resources>
-    <bool name="config_additional_system_update_setting_enable">true</bool>
-    <string name="additional_system_update" translatable="false">org.coachpo.cruxupdater</string>
-    <string name="additional_system_update_menu" translatable="false">org.coachpo.cruxupdater.UpdateActivity</string>
-</resources>
